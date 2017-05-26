@@ -8,7 +8,7 @@ from Bio.PDB import PDBParser
 import urllib.request
 import urllib.parse
 import xml.etree.ElementTree
-import library.definitions
+import library.definitions as definitions
 import os
 
 class Blast:
@@ -24,13 +24,15 @@ class Blast:
         try:
             # open fasta file and read it
             fasta_file=open(protein_sequence_file_path,'r')
+            fasta_sequence_header=fasta_file.readline()
             fasta_sequence=fasta_file.readline()
             fasta_file.close()
             # create file to include blast results
-            blast_file_path=protein_sequence_file_path.replace('.fasta','.blast')
+            blast_file_path=protein_sequence_file_path.replace(definitions.FASTA_FILE_EXTENSION,\
+                                                               definitions.BLAST_FILE_EXTENSION)
             blast_file=open(blast_file_path,'w')
             # do blast
-            result_handle = NCBIWWW.qblast(library.definitions.BLAST_PROGRAM, 'pdb', fasta_sequence,
+            result_handle = NCBIWWW.qblast(definitions.BLAST_PROGRAM, 'pdb', fasta_sequence,
                                            perc_ident=percentage_identity_cutoff)
             blast_records = NCBIXML.parse(result_handle)
             # initialise blast list to return results
@@ -41,6 +43,7 @@ class Blast:
                     for hsp in alignment.hsps:
                         percentage_identity=hsp.identities*100/len(fasta_sequence)
                         if percentage_identity > percentage_identity_cutoff:
+                            # write blast into file
                             blast_file.write('****Blast results****\n\n')
                             blast_file.write('sequence:%s\n' % alignment.title)
                             blast_file.write('number of identities:%s\n' % hsp.identities)
@@ -56,6 +59,7 @@ class Blast:
                             blast_file.write(hsp.query[0:75] + '...\n')
                             blast_file.write(hsp.match[0:75] + '...\n')
                             blast_file.write(hsp.sbjct[0:75] + '...\n\n')
+                            # write ligand data of pdb into file
                             blast_file.write("->Ligand information\n")
                             pdb_url_ligand_string = "http://www.rcsb.org//pdb/rest/ligandInfo?structureId=" + \
                                                  blast_protein
@@ -76,10 +80,26 @@ class Blast:
                                     blast_file.write("InChIKey:%s\n" % ligand_inchikey)
                                     blast_file.write("InChI:%s\n" % ligand.find("InChI").text)
                                     blast_file.write("smiles:%s\n\n" % ligand.find("smiles").text)
+                            # write pdb experimental details to file
+                            blast_file.write("->Protein information\n")
+                            pdb_url_description_string = "http://www.rcsb.org/pdb/rest/describePDB?structureId=" + \
+                                                    blast_protein
+                            pdb_response = urllib.request.urlopen(pdb_url_description_string)
+                            description_XML= pdb_response.read().decode("utf-8")
+                            root = xml.etree.ElementTree.fromstring(description_XML)
+                            for PDB_info in root.findall("PDB"):
+                                blast_file.write("Protein Id:%s\n" % PDB_info.get("structureId"))
+                                blast_file.write("Experimental method:%s\n" % PDB_info.get("expMethod"))
+                                pdb_resolution=PDB_info.get("resolution")
+                                blast_file.write("Resolution:%s\n" % pdb_resolution)
+                                blast_file.write("Number of entities:%s\n" % PDB_info.get("nr_entities"))
+                                blast_file.write("Number of residues:%s\n" % PDB_info.get("nr_residues"))
+                                blast_file.write("Number of atoms:%s\n\n" % PDB_info.get("nr_atoms"))
                             # populate blast_list
-                            blast_list.append({library.definitions.DICT_BLAST_PROTEIN:blast_protein,
-                            library.definitions.DICT_BLAST_PERCENTAGE_IDENTITY:percentage_identity,
-                            library.definitions.DICT_BLAST_INCHIKEY_FOUND:(ligand_inchikey==inchi_key)})
+                            blast_list.append({definitions.DICT_BLAST_PROTEIN:blast_protein,
+                            definitions.DICT_BLAST_PERCENTAGE_IDENTITY:round(percentage_identity,2),
+                            definitions.DICT_BLAST_PROTEIN_RESOLUTION:float(pdb_resolution),
+                            definitions.DICT_BLAST_INCHIKEY_FOUND:(ligand_inchikey==inchi_key)})
             blast_file.close()
             result_handle.close()
             return blast_list
