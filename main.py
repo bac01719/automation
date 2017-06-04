@@ -7,6 +7,8 @@ from library.gene import Gene
 from library.protein import Protein
 from library.fasta import Fasta
 from library.blast import Blast
+from library.clustalomega import ClustalOmega
+
 
 gene_list=Gene.get_genes("pncA","mycobacterium tuberculosis")
 #gene_list=Gene.get_genes("gid","mycobacterium tuberculosis")
@@ -45,5 +47,17 @@ for fasta_file_path in fasta_file_path_list:
     else:
         print("*********** blast did not find sequences with percentage identities above %s%% ****************" % \
               definitions.BLAST_PERCENTAGE_IDENTITY_CUTOFF)
-    # print out homology template
-    Fasta.get_templates(template_protein_names.strip(","),fasta_file_path)
+    # homology processing
+    # save templates into fasta file
+    template_file_path=Fasta.get_templates(template_protein_names.strip(","),fasta_file_path)
+    # do multiple sequence alignment and save file
+    clustal_omega_object=ClustalOmega(template_file_path)
+    # if no error store msa file
+    if clustal_omega_object.get_status()==definitions.OPAL_SUCCESS:
+        # save msa file
+        clustal_omega_object.save_msa()
+    else:
+        # an error occurred
+        print(clustal_omega_object.get_error())
+
+

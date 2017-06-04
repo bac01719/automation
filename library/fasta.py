@@ -9,11 +9,12 @@ import xml.etree.ElementTree
 import re
 import time
 import urllib.request
+from pathlib import Path
 
 class Fasta:
     """ class to obtain FAST from protien NCBI number"""
 
-    """method to obtain fasta given protein dictionary and working directory"""
+    """method to obtain fasta given list of proteins and working directory"""
     @staticmethod
     def get_fasta(protein_list,home_folder):
         try:
@@ -74,13 +75,18 @@ class Fasta:
     def get_templates(template_protein_names,fasta_file_path):
         try:
             # check if fast folder exist otherwise give error
-            fasta_folder=definitions.FILE_SEPARATOR.join(fasta_file_path.split(definitions.FILE_SEPARATOR)[0:10])
+            path_object=Path(fasta_file_path)
+            fasta_folder=str(path_object.parent)
+            #fasta_folder=definitions.FILE_SEPARATOR.join(fasta_file_path.split(definitions.FILE_SEPARATOR)[0:10])
             os.chdir(fasta_folder)
             # make homology folder
             homology_folder=fasta_folder+definitions.FILE_SEPARATOR+definitions.HOMOLOGY_FOLDER
             os.mkdir(homology_folder)
-            # populate template file with proteins
-            template_file_name=fasta_file_path.split(definitions.FILE_SEPARATOR)[11].\
+            # populate temp
+            # late file with proteins
+            #template_file_name=fasta_file_path.split(definitions.FILE_SEPARATOR)[11].\
+            #    replace(definitions.FASTA_FILE_EXTENSION,definitions.HOMOLOGY_TEMPLATE_FILE_EXTENSION)
+            template_file_name=path_object.name.\
                 replace(definitions.FASTA_FILE_EXTENSION,definitions.HOMOLOGY_TEMPLATE_FILE_EXTENSION)
             template_file_path=homology_folder+definitions.FILE_SEPARATOR+template_file_name
             template_file=open(template_file_path,"w")
@@ -106,4 +112,4 @@ class Fasta:
             raise
         else:
             template_file.close()
-            return templates_string
+            return template_file_path

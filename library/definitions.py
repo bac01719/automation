@@ -14,6 +14,7 @@ MINIMUM_PERCENT_IDENTITY_FOR_OTHER=95   # sequences larger than or equal to this
 FASTA_FILE_EXTENSION=".fasta"   # fasta file extension
 BLAST_FILE_EXTENSION=".blast"   # blast file extension
 HOMOLOGY_TEMPLATE_FILE_EXTENSION=".template"    # homology template file extension
+MSA_FILE_EXTENSION=".fa" #multisequence file alignment extension (e.g. ClustalOmega)
 
 
 # blast module options
@@ -38,4 +39,8 @@ DICT_BLAST_PERCENTAGE_IDENTITY="blast_percentage_identity"
 DICT_BLAST_PROTEIN="blast_protein"
 DICT_BLAST_INCHIKEY_FOUND="blast_inchikey_found"
 DICT_BLAST_PROTEIN_RESOLUTION="blast_protein_resolution"
+
+# OPAL definitions
+OPAL_CLUSTALOMEGA_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/ClustalOmegaService.xml"
+OPAL_SUCCESS=8  # success code from opal servers
 
