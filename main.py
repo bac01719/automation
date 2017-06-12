@@ -22,13 +22,15 @@ for fasta_file_path in fasta_file_path_list:
     if len(blast_list)>0:
         template_protein_names=""
         for blast in blast_list:
-            if (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]>=definitions.HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE and \
-                    blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]<=definitions.HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE) \
+            if (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]>=definitions.HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE \
+                    and blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]<=\
+                        definitions.HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE) \
                     and blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]<=definitions.HOMOLOGY_MINIMUM_RESOLUTION:
                 template_protein_names=template_protein_names+blast[definitions.DICT_BLAST_PROTEIN]+","
                 print("%s :" % blast[definitions.DICT_BLAST_PROTEIN], end="")
                 print("********Homology model next (%s%%,%s) **************" % \
-                      (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY],blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]))
+                      (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY],\
+                       blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]))
             elif blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]>=definitions.MINIMUM_PERCENT_IDENTITY_FOR_OTHER and \
                     blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]<=definitions.OTHER_MINIMUM_RESOLUTION:
                 print("%s :" % blast[definitions.DICT_BLAST_PROTEIN],end="")
@@ -38,7 +40,7 @@ for fasta_file_path in fasta_file_path_list:
                           blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]))
                 elif blast[definitions.DICT_BLAST_INCHIKEY_FOUND]==False:
                    print("*********** docking next (%s%%,%s) ****************" % \
-                         (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY],
+                clustal_omega_object.save_msa()         (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY],
                           blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]))
             else:
                 print("%s :" % blast[definitions.DICT_BLAST_PROTEIN], end="")
@@ -48,16 +50,17 @@ for fasta_file_path in fasta_file_path_list:
         print("*********** blast did not find sequences with percentage identities above %s%% ****************" % \
               definitions.BLAST_PERCENTAGE_IDENTITY_CUTOFF)
     # homology processing
-    # save templates into fasta file
+    # save templates into fasta template_file_path=Fasta.get_templates(template_protein_names.strip(","),fasta_file_pathe
     template_file_path=Fasta.get_templates(template_protein_names.strip(","),fasta_file_path)
     # do multiple sequence alignment and save file
-    clustal_omega_object=ClustalOmega(template_file_path)
+    clustal_omega_object=ClustalOmega(fasta_file_path,template_file_path)
     # if no error store msa file
     if clustal_omega_object.get_status()==definitions.OPAL_SUCCESS:
         # save msa file
         clustal_omega_object.save_msa()
     else:
         # an error occurred
+        print("Error")
         print(clustal_omega_object.get_error())
 
 

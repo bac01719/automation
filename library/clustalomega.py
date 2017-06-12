@@ -15,17 +15,29 @@ class ClustalOmega:
     _template_file_path=""
 
     """ initialise class with full template file path """
-    def __init__(self, template_file_path):
+    def __init__(self, fasta_file_path, template_file_path):
         global _opal_response
         global _template_file_path
         _template_file_path=template_file_path
         try:
             # initialise soap client
             opal_client=Client(definitions.OPAL_CLUSTALOMEGA_WSDL)
+            fasta_file_contents=ProcessFile.encode_file(fasta_file_path)
             template_file_contents=ProcessFile.encode_file(template_file_path)
+            # define arguments
+            arg_list="-i templateFile.fa -o msa.fa"
+            if definitions.CLUSTAL_OMEGA_DEALIGN==True:
+                arg_list+=" --dealign"
+            if definitions.CLUSTAL_OMEGA_FULL==True:
+                arg_list+=" --full"
+            if definitions.CLUSTAL_OMEGA_FULLITER==True:
+                arg_list+=" --full-iter"
+            if definitions.CLUSTAL_OMEGA_ITER>0:
+                arg_list+=" --iter "+str(definitions.CLUSTAL_OMEGA_ITER)
+            print(arg_list)
             _opal_response=opal_client.service.launchJobBlocking\
-                (argList="-i templateFile.fa -o msa.fa",\
-                 inputFile={"name":"templateFile.fa","contents":template_file_contents})
+                (argList=arg_list,\
+                 inputFile={"name":"templateFile.fa","contents":fasta_file_contents+template_file_contents})
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise

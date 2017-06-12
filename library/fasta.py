@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 class Fasta:
-    """ class to obtain FAST from protien NCBI number"""
+    """ class to obtain FASTA from protien NCBI number"""
 
     """method to obtain fasta given list of proteins and working directory"""
     @staticmethod
@@ -59,7 +59,7 @@ class Fasta:
                     protein_sequence_file=open(protein_sequence_file_path,'w')
                     protein_sequence_file_header='>'+protein[definitions.DICT_PROTEIN_NCBI_ID]+'_'+str(id_number)
                     protein_sequence_file.write(protein_sequence_file_header+"\n")
-                    protein_sequence_file.write(fasta_sequence)
+                    protein_sequence_file.write(fasta_sequence+"\n")
                     protein_sequence_file.close()
                     handle.close()
                     fasta_file_path_list.append(protein_sequence_file_path)
@@ -91,7 +91,9 @@ class Fasta:
             template_file_path=homology_folder+definitions.FILE_SEPARATOR+template_file_name
             template_file=open(template_file_path,"w")
             # call RCSB custom report web service
-            pdb_url_sequence_string = "http://www.rcsb.org/pdb/rest/customReport.xml?pdbids=" + \
+            pdb_url_sequence_string = "" \
+
+
                                     template_protein_names + "&customReportColumns=sequence"
             pdb_response = urllib.request.urlopen(pdb_url_sequence_string)
             sequence_XML = pdb_response.read().decode("utf-8")
