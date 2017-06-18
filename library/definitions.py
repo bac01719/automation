@@ -25,7 +25,6 @@ BLAST_PERCENTAGE_IDENTITY_CUTOFF=30     # sequences above or equal to this figur
 HOMOLOGY_FOLDER="homology"
 HOMOLOGY_MONOMER_CHAIN="A"
 
-
 # databases
 ORGANISM_DATABASE="taxonomy"
 GENE_DATABASE="gene"
@@ -39,8 +38,26 @@ DICT_BLAST_PERCENTAGE_IDENTITY="blast_percentage_identity"
 DICT_BLAST_PROTEIN="blast_protein"
 DICT_BLAST_INCHIKEY_FOUND="blast_inchikey_found"
 DICT_BLAST_PROTEIN_RESOLUTION="blast_protein_resolution"
+DICT_FASTA_SEQUENCE="fasta"
+DICT_FASTA_FILE_PATH="fasta_file_path"
+DICT_HOMOLOGY_ZDOPE="max_zDOPE"
+DICT_HOMOLOGY_BEST_PATH="best_homology_file_path"
 
 # OPAL definitions
 OPAL_CLUSTALOMEGA_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/ClustalOmegaService.xml"
+OPAL_MODELLER_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/Modeller9v8Service.xml"
 OPAL_SUCCESS=8  # success code from opal servers
+
+# ClustalOmega keys
+CLUSTAL_OMEGA_DEALIGN=True   # Dealign input sequences
+CLUSTAL_OMEGA_FULL=True # Use full distance matrix for guide-tree calculation (might be slow; mBed is default)
+CLUSTAL_OMEGA_FULLITER=True # Use full distance matrix for guide-tree calculation during iteration
+                            # (might be slowish; mBed is default)
+CLUSTAL_OMEGA_ITER=3    # Number of (combined guide-tree/HMM) iterations (-9 for none)
+
+# Modeller contants
+MODELLER_PIR_EXTENSION=".pir"
+MODELLER_LICENCE_FILE="/home/bola/Documents/Private/BBK/project/other/modeller.lic"
+MODELLER_AUTOLOOP_PYTHON_FILE="/home/bola/Documents/Private/BBK/project/python/library/modeller/ModellerModelling.py"
+
 

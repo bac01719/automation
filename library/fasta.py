@@ -10,9 +10,72 @@ import re
 import time
 import urllib.request
 from pathlib import Path
+from Bio.PDB.PDBParser import PDBParser
+import Bio.PDB.Selection as Selection
 
 class Fasta:
     """ class to obtain FASTA from protien NCBI number"""
+
+    """ method to tranlate 3 letter aa to 1 letter """
+    @staticmethod
+    def __get_aa_code(amino_acid):
+        aa_code = ""
+        if str(amino_acid).upper() == "GLY":
+            aa_code = "G"
+        elif str(amino_acid).upper() == "PRO":
+            aa_code = "P"
+        elif str(amino_acid).upper() == "ALA":
+            aa_code = "A"
+        elif str(amino_acid).upper() == "VAL":
+            aa_code = "V"
+        elif str(amino_acid).upper() == "LEU":
+            aa_code = "L"
+        elif str(amino_acid).upper() == "ILE":
+            aa_code = "I"
+        elif str(amino_acid).upper() == "MET":
+            aa_code = "M"
+        elif str(amino_acid).upper() == "CYS":
+            aa_code = "C"
+        elif str(amino_acid).upper() == "PHE":
+            aa_code = "F"
+        elif str(amino_acid).upper() == "TYR":
+            aa_code = "Y"
+        elif str(amino_acid).upper() == "TRP":
+            aa_code = "W"
+        elif str(amino_acid).upper() == "HIS":
+            aa_code = "H"
+        elif str(amino_acid).upper() == "LYS":
+            aa_code = "K"
+        elif str(amino_acid).upper() == "ARG":
+            aa_code = "R"
+        elif str(amino_acid).upper() == "GLN":
+            aa_code = "Q"
+        elif str(amino_acid).upper() == "ASN":
+            aa_code = "N"
+        elif str(amino_acid).upper() == "GLU":
+            aa_code = "E"
+        elif str(amino_acid).upper() == "ASP":
+            aa_code = "D"
+        elif str(amino_acid).upper() == "SER":
+            aa_code = "S"
+        elif str(amino_acid).upper() == "THR":
+            aa_code = "T"
+        else:
+            aa_code = "-"
+        return aa_code
+
+    """ method to return amino acid sequence with coords in pdf file """
+    @staticmethod
+    def __get_pdbseq(protein, protein_file_path):
+        pdb_object = PDBParser(PERMISSIVE=True, QUIET=True)
+        pdb_structure = pdb_object.get_structure(protein, protein_file_path)
+        pdb_fasta = ""
+        for residue in Selection.unfold_entities(pdb_structure, "R"):
+            # print(residue.get_full_id())
+            if residue.get_full_id()[3][0] == " " and residue.get_full_id()[2] == "A":
+                pdb_fasta += Fasta.__get_aa_code(residue.get_resname())
+                # print("-- %s , %s \n" % (residue.get_resname(),get_aa_code(residue.get_resname())))
+        return pdb_fasta
 
     """method to obtain fasta given list of proteins and working directory"""
     @staticmethod
@@ -27,7 +90,8 @@ class Fasta:
             fasta_sequence=''
             if not os.path.exists(fasta_folder):
                 os.mkdir(fasta_folder)
-            fasta_file_path_list=[]
+            fasta_list=[]
+            # get fasta for each protein
             for protein in protein_list:
                 Entrez.email = definitions.EMAIL_ADDRESS
                 handle = Entrez.esearch(db=definitions.PROTEIN_DATABASE,
@@ -62,56 +126,56 @@ class Fasta:
                     protein_sequence_file.write(fasta_sequence+"\n")
                     protein_sequence_file.close()
                     handle.close()
-                    fasta_file_path_list.append(protein_sequence_file_path)
+                    fasta_list.append({definitions.DICT_FASTA_SEQUENCE:fasta_sequence,\
+                                       definitions.DICT_FASTA_FILE_PATH:protein_sequence_file_path})
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
         else:
-            return fasta_file_path_list
+            return fasta_list
 
     """method to obtain template for homology modelling given a set of PDB names
        in comma separated string"""
     @staticmethod
-    def get_templates(template_protein_names,fasta_file_path):
+    def get_templates(template_protein_names,fasta_item):
         try:
             # check if fast folder exist otherwise give error
-            path_object=Path(fasta_file_path)
+            path_object=Path(fasta_item[definitions.DICT_FASTA_FILE_PATH])
             fasta_folder=str(path_object.parent)
-            #fasta_folder=definitions.FILE_SEPARATOR.join(fasta_file_path.split(definitions.FILE_SEPARATOR)[0:10])
             os.chdir(fasta_folder)
             # make homology folder
             homology_folder=fasta_folder+definitions.FILE_SEPARATOR+definitions.HOMOLOGY_FOLDER
             os.mkdir(homology_folder)
-            # populate temp
-            # late file with proteins
-            #template_file_name=fasta_file_path.split(definitions.FILE_SEPARATOR)[11].\
-            #    replace(definitions.FASTA_FILE_EXTENSION,definitions.HOMOLOGY_TEMPLATE_FILE_EXTENSION)
-            template_file_name=path_object.name.\
-                replace(definitions.FASTA_FILE_EXTENSION,definitions.HOMOLOGY_TEMPLATE_FILE_EXTENSION)
-            template_file_path=homology_folder+definitions.FILE_SEPARATOR+template_file_name
-            template_file=open(template_file_path,"w")
-            # call RCSB custom report web service
-            pdb_url_sequence_string = "" \
-
-
-                                    template_protein_names + "&customReportColumns=sequence"
-            pdb_response = urllib.request.urlopen(pdb_url_sequence_string)
-            sequence_XML = pdb_response.read().decode("utf-8")
-            #print(sequence_XML)
-            root = xml.etree.ElementTree.fromstring(sequence_XML)
-            templates_string=""
-            for record in root.findall("record"):
-                #print(record.find("dimEntity.chainId").text)
-                if record.find("dimEntity.chainId").text==definitions.HOMOLOGY_MONOMER_CHAIN:
-                    template_sequence_title=">" + record.find("dimEntity.structureId").text \
-                                                + "|" + record.find("dimEntity.chainId").text
-                    template_sequence_body=record.find("dimEntity.sequence").text
-                    template_file.write(template_sequence_title+"\n")
-                    template_file.write(template_sequence_body+"\n")
-                    templates_string=templates_string+template_sequence_title+"\n"+template_sequence_body+"\n"
+            # open template file
+            template_file_name = path_object.name. \
+                replace(definitions.FASTA_FILE_EXTENSION, definitions.HOMOLOGY_TEMPLATE_FILE_EXTENSION)
+            template_file_path = homology_folder + definitions.FILE_SEPARATOR + template_file_name
+            template_file = open(template_file_path, "w")
+            # download proteins in template_protein_names list and update template file
+            print(template_protein_names)
+            for protein in template_protein_names:
+                print(protein)
+                protein_url="https://files.rcsb.org/view/"+protein+".pdb"
+                print(protein_url)
+                protein_res=urllib.request.urlopen(protein_url)
+                protein_pdb=protein_res.read().decode("utf-8")
+                protein_file_path=homology_folder+definitions.FILE_SEPARATOR+protein+".pdb"
+                protein_file=open(protein_file_path,"w")
+                protein_file.write(protein_pdb)
+                protein_file.close()
+                template_sequence_title = ">" + protein + "|A"
+                template_sequence_body = Fasta.__get_pdbseq(protein,protein_file_path)
+                template_file.write(template_sequence_title + "\n")
+                template_file.write(template_sequence_body + "\n")
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
         else:
             template_file.close()
             return template_file_path
+
+
+
+
+
+

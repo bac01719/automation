@@ -7,6 +7,7 @@ from zeep import Client
 import library.definitions as definitions
 from library.processfile import ProcessFile
 import urllib.request
+import library.utilities as utilities
 
 class ClustalOmega:
     """ class to wrap call to opal soap server - clustal omega service"""
@@ -34,7 +35,7 @@ class ClustalOmega:
                 arg_list+=" --full-iter"
             if definitions.CLUSTAL_OMEGA_ITER>0:
                 arg_list+=" --iter "+str(definitions.CLUSTAL_OMEGA_ITER)
-            print(arg_list)
+            print("Clustal command: clustalo %s " % arg_list)
             _opal_response=opal_client.service.launchJobBlocking\
                 (argList=arg_list,\
                  inputFile={"name":"templateFile.fa","contents":fasta_file_contents+template_file_contents})
@@ -45,28 +46,21 @@ class ClustalOmega:
     """ get opal server returned error status """
     def get_status(self):
         global _opal_response
-        return _opal_response["status"]["code"]
+        return utilities.get_status(_opal_response)
 
     """ get opal server returned error message """
     def get_error(self):
         global _opal_response
-        try:
-            # get opal error link and read contents
-            opal_error=urllib.request.urlopen(_opal_response["jobOut"]["stdErr"])
-            opal_error_contents=opal_error.read()
-            opal_error.close()
-            return opal_error_contents.decode("utf-8")
-        except Exception as Argument:
-            print("An error has occurred \n%s" % Argument)
-            raise
+        return utilities.get_error(_opal_response)
 
     """ get clustal omega results and save in file """
     def save_msa(self):
         global _opal_response
         global _template_file_path
+        MSA_INDEX=0
         try:
             # get clustal omega results
-            opal_msa=urllib.request.urlopen(_opal_response['jobOut']['outputFile']['name'=='msa.fa']['url'])
+            opal_msa=urllib.request.urlopen(_opal_response['jobOut']['outputFile'][MSA_INDEX]['url'])
             opal_msa_contents=opal_msa.read()
             opal_msa.close()
             # save results to file
@@ -75,6 +69,7 @@ class ClustalOmega:
             msa_file=open(msa_file_path,'w')
             msa_file.write(opal_msa_contents.decode("utf-8"))
             msa_file.close()
+            return msa_file_path
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
