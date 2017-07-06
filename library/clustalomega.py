@@ -8,6 +8,7 @@ import library.definitions as definitions
 from library.processfile import ProcessFile
 import urllib.request
 import library.utilities as utilities
+from pathlib import Path
 
 class ClustalOmega:
     """ class to wrap call to opal soap server - clustal omega service"""
@@ -35,10 +36,11 @@ class ClustalOmega:
                 arg_list+=" --full-iter"
             if definitions.CLUSTAL_OMEGA_ITER>0:
                 arg_list+=" --iter "+str(definitions.CLUSTAL_OMEGA_ITER)
-            print("Clustal command: clustalo %s " % arg_list)
+            print("\nClustal command: clustalo %s\n" % arg_list)
             _opal_response=opal_client.service.launchJobBlocking\
                 (argList=arg_list,\
                  inputFile={"name":"templateFile.fa","contents":fasta_file_contents+template_file_contents})
+            print(_opal_response)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
@@ -60,10 +62,13 @@ class ClustalOmega:
         MSA_INDEX=0
         try:
             # get clustal omega results
+            # save stdOut and stdErr files
+            utilities.save_std_files(_opal_response,Path(_template_file_path).parent.name)
+            # read msa results
             opal_msa=urllib.request.urlopen(_opal_response['jobOut']['outputFile'][MSA_INDEX]['url'])
             opal_msa_contents=opal_msa.read()
             opal_msa.close()
-            # save results to file
+            # save msa results to file
             msa_file_path=_template_file_path.replace(definitions.HOMOLOGY_TEMPLATE_FILE_EXTENSION,\
                                                         definitions.MSA_FILE_EXTENSION)
             msa_file=open(msa_file_path,'w')

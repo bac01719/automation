@@ -721,7 +721,7 @@ Built on Jun 14, 2005 (09:15:57 EDT)-->
 
       <wsdl:port binding="impl:AppServicePortSoapBinding" name="AppServicePort">
 
-         <wsdlsoap:address location="http://nbcr-222.ucsd.edu/opal2/services/pdb2pqr_2.0.0"/>
+         <wsdlsoap:address location="http://nbcr-222.ucsd.edu/opal2/services/prepare_receptor_1.5.6"/>
 
       </wsdl:port>
 

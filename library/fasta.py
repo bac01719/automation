@@ -132,7 +132,8 @@ class Fasta:
             print("An error has occurred \n%s" % Argument)
             raise
         else:
-            return fasta_list
+            return {definitions.DICT_FASTA_LIST:fasta_list,\
+                    definitions.DICT_FASTA_PROTEIN_FOLDER:fasta_protein_sequence_folder}
 
     """method to obtain template for homology modelling given a set of PDB names
        in comma separated string"""
@@ -152,6 +153,7 @@ class Fasta:
             template_file_path = homology_folder + definitions.FILE_SEPARATOR + template_file_name
             template_file = open(template_file_path, "w")
             # download proteins in template_protein_names list and update template file
+            print("\nDownloading PDBs for temple\n")
             print(template_protein_names)
             for protein in template_protein_names:
                 print(protein)

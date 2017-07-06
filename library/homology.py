@@ -68,13 +68,13 @@ class Homology:
                 else:
                     pir_file.write(line)
             # second pass for pir file to add asterick at end of sequences
-            pir_file.seek(1)
+            pir_file.seek(0)
             pir_file_content=pir_file.read()
             reg_object=re.compile(r"(\n>)")
             pir_file_content=reg_object.sub(r"*\n>",pir_file_content)
             reg_object=re.compile(r"(\n$)")
             pir_file_content=reg_object.sub(r"*\n",pir_file_content)
-            pir_file.seek(1)
+            pir_file.seek(0)
             pir_file.write(pir_file_content)
             # close files
             pir_file.close()
@@ -138,8 +138,10 @@ class Homology:
                 protein_file_path=str(Path(_modeller_folder).parent)+definitions.FILE_SEPARATOR+protein
                 input_file.append({"name":protein,"contents":ProcessFile.encode_file(protein_file_path)})
             # call opal client
+            print("\nModeller command : ModellerScriptConfig.xml\n")
             _opal_response=opal_client.service.launchJobBlocking(argList="ModellerScriptConfig.xml", \
                                                             inputFile=input_file)
+            print(_opal_response)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
@@ -159,6 +161,8 @@ class Homology:
         global _opal_response
         global _modeller_folder
         try:
+            # save stdOut and stdErr files
+            utilities.save_std_files(_opal_response, _modeller_folder)
             # get base url
             opal_base=_opal_response['status']['baseURL']
             # get index for ok_models.dat output
@@ -177,7 +181,7 @@ class Homology:
             ok_models.close()
             # read ok model file into a dictionary list
             ok_models_list=[]
-            ok_models_file.seek(1)
+            ok_models_file.seek(0)
             for lines in ok_models_file.readlines()[1:]:
                 line_split=lines.strip().split("\t")
                 print({"pdb_name":line_split[0],"GA341":line_split[1],"zDOPE":line_split[2]})

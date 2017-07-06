@@ -17,10 +17,10 @@ class Blast:
     """
     method to return dictionary of blast results as well as save to disk.
     input is fasta file path, percentage identity cutoff for proteins to be docked
-    or complexes found that can go straight to data analysis, InChIKey of ligand    
+    or complexes found that can go straight to data analysis, InChI of ligand    
     """
     @staticmethod
-    def do_blast(protein_sequence_file_path,percentage_identity_cutoff,inchi_key):
+    def do_blast(protein_sequence_file_path,percentage_identity_cutoff,smiles):
         try:
             # open fasta file and read it
             fasta_file=open(protein_sequence_file_path,'r')
@@ -76,8 +76,8 @@ class Blast:
                                     blast_file.write("molecular weight:%s\n" % ligand.get("molecularWeight"))
                                     blast_file.write("Chemical name:%s\n" % ligand.find("chemicalName").text)
                                     blast_file.write("Formula:%s\n" % ligand.find("formula").text)
-                                    ligand_inchikey=ligand.find("InChIKey").text
-                                    blast_file.write("InChIKey:%s\n" % ligand_inchikey)
+                                    ligand_smiles=ligand.find("smiles").text
+                                    blast_file.write("InChIKey:%s\n" % ligand_smiles)
                                     blast_file.write("InChI:%s\n" % ligand.find("InChI").text)
                                     blast_file.write("smiles:%s\n\n" % ligand.find("smiles").text)
                             # write pdb experimental details to file
@@ -99,7 +99,7 @@ class Blast:
                             blast_list.append({definitions.DICT_BLAST_PROTEIN:blast_protein,
                             definitions.DICT_BLAST_PERCENTAGE_IDENTITY:round(percentage_identity,2),
                             definitions.DICT_BLAST_PROTEIN_RESOLUTION:float(pdb_resolution),
-                            definitions.DICT_BLAST_INCHIKEY_FOUND:(ligand_inchikey==inchi_key)})
+                            definitions.DICT_BLAST_SMILES_FOUND:(ligand_smiles==smiles)})
             blast_file.close()
             result_handle.close()
             return blast_list
