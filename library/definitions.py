@@ -69,6 +69,8 @@ OPAL_PDB2PQR_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/p
 OPAL_PREPRECEP_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/prepare_receptor_1.5.6.xml"
 OPAL_VINA_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/vina_1.1.2.xml"
 OPAL_SUCCESS=8  # success code from opal servers
+OPAL_FAILURE=4  # failure code from opal servers
+OPAL_POOLING_TIME=4 # time interval for pooling opal server
 
 # ClustalOmega keys
 CLUSTAL_OMEGA_DEALIGN=True   # Dealign input sequences
@@ -112,8 +114,15 @@ PRERECEP_OPTION_CLEANUP='nphs_lps_waters_nonstdres'
 PRERECEPT_OPTION_NONSTDCHAIN=False   # delete every nonstd residue from any chain. Options are False and True
 
 # autodock vina options - note blind docking is used
-VINA_OPTION_EXHAUST=50    # exhaustiveness of the global search (roughly proportional to time)
-VINA_OPTION_MODES=100       # maximum number of binding modes to generate
+VINA_OPTION_EXHAUST=200    # exhaustiveness of the global search (roughly proportional to time)
+VINA_OPTION_MODES=500       # maximum number of binding modes to generate
+
+# data analysis web site variables
+DUET_URL="http://biosig.unimelb.edu.au/duet/stability_prediction"    # website for duet server
+CSM_LIG_URL="http://biosig.unimelb.edu.au/csm_lig/run_prediction"    # website for csm_lig server
+MCSM_LIG_URL="http://biosig.unimelb.edu.au/mcsm_lig/prediction"      # website for mcsm_lig server
+
+
 
 
 

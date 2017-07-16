@@ -20,7 +20,7 @@ data_analysis_complex_file_path=""
 docking_receptor_file_path=""
 # get input - gene, organism, SMILES, analysis_folder
 gene_list=Gene.get_genes("pncA","mycobacterium tuberculosis")
-ligand_smiles="NC(=O)c1cnccn1"
+ligand_smiles="NC(=O)C1=NC=CN=C1"
 home_folder="/home/bola/Documents/Private/BBK/project/other"
 # print disclaimer
 print("Pipeline to aid in research of effects of mutation on protein-ligand binding affinity")

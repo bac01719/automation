@@ -9,6 +9,7 @@ from zeep import Client
 from library.processfile import ProcessFile
 import library.utilities as utilities
 import urllib.request
+import time
 
 class Vina:
     """ class to perform docking with autodock vina """
@@ -16,6 +17,7 @@ class Vina:
     _docking_folder=""
     _receptor_pdbqt_file_path= ""
     _vina_opal_response=[]
+    _vina_opal_status_response=[]
     _ligand_path_object=""
     _receptor_ligand_pdbqt_file_path= ""
     _receptor_ligand_pdbqt_file_name=""
@@ -26,6 +28,7 @@ class Vina:
         global _receptor_pdbqt_file_path
         global _ligand_path_object
         global _vina_opal_response
+        global _vina_opal_status_response
         _docking_folder=docking_folder
         _receptor_pdbqt_file_path=receptor_pdbqt_file_path
         try:
@@ -53,14 +56,24 @@ class Vina:
             config_file.close()
             # call web service
             print("\nVina command: vina --config=config.txt\n")
-            _vina_opal_response = opal_client.service.launchJobBlocking \
+            vina_opal_initial_response = opal_client.service.launchJob \
                 (argList="--config=config.txt", \
                  inputFile=[{"name": "config.txt", "contents": ProcessFile.encode_file(config_file_path)}, \
                             {"name": receptor_path_object.name,"contents":\
                                 ProcessFile.encode_file(receptor_pdbqt_file_path)}, \
                             {"name": _ligand_path_object.name, "contents":\
                                 ProcessFile.encode_file(ligand_pdbqt_file_path)}])
-            print(_vina_opal_response)
+            print(vina_opal_initial_response)
+            vina_opal_jobid=vina_opal_initial_response["jobID"]
+            while True:
+                # get opal status
+                _vina_opal_status_response=opal_client.service.queryStatus(vina_opal_jobid)
+                if utilities.opal_job_running(_vina_opal_status_response):
+                    _vina_opal_response=opal_client.service.getOutputs(vina_opal_jobid)
+                    print(_vina_opal_response)
+                    break
+                else:
+                    time.sleep(definitions.OPAL_POOLING_TIME)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
@@ -92,7 +105,7 @@ class Vina:
                         max_z=z_coord
                     elif z_coord < min_z:
                         min_z=z_coord
-        return {definitions.DICT_RECEPTOR_CTRX:round(min_x+((max_x-min_x)/2),3),\
+        return {definitions.DICT_RECEPTOR_CTRX:round(min_x+((max_x-min_x+1)/2),3),\
                 definitions.DICT_RECEPTOR_CTRY:round(min_y+((max_y-min_y)/2),3),\
                 definitions.DICT_RECEPTOR_CTRZ:round(min_z+((max_z-min_z)/2),3),\
                 definitions.DICT_RECEPTOR_SIZEX:round(max_x-min_x,3),\
@@ -102,8 +115,7 @@ class Vina:
     """ base class for opal clients """
     """ get opal server returned error status """
     def get_status(self):
-        global _vina_opal_repdbqtsponse
-        return utilities.get_status(_vina_opal_response)
+        return _vina_opal_status_response["code"]
 
     """ get opal server returned error message """
     def get_error(self):
@@ -124,7 +136,7 @@ class Vina:
             # get vina results
             complex_pdb_file_path=""
             opal_poses_file_name=_ligand_path_object.name.replace(".pdbqt","_out.pdbqt")
-            for output in _vina_opal_response['jobOut']['outputFile']:
+            for output in _vina_opal_response['outputFile']:
                 if output['name'] == opal_poses_file_name:
                     opal_poses = urllib.request.urlopen(output['url'])
                     opal_poses_contents = opal_poses.read()
@@ -144,8 +156,12 @@ class Vina:
                         for line in receptor_pdbqt:
                             receptor_ligand_pdbqt.write(line)
                     poses_file.seek(0)
+                    # change ATOM in ligand.pdbqt file to HETATM
+                    # assign ligand to chain A
                     while True:
                         line=poses_file.readline()
+                        line=line.replace("LIG    1","LIG A  1")
+                        "LIG    1"
                         if line != "MODEL 2\n":
                             if line.count("ATOM      ") == 1:
                                 receptor_ligand_pdbqt.write(line.replace("ATOM      ", "HETATM    "))
@@ -186,18 +202,28 @@ class Vina:
             arg_list = "-ifile " + _receptor_ligand_pdbqt_file_name + " -iformat -ipdbqt -ofile " + \
                        complex_pdb_file_name + " -oformat -opdb"
             print("\nBabel command: babel %s\n" % arg_list)
-            babel_opal_response = opal_client.service.launchJobBlocking \
+            babel_opal_initial_response = opal_client.service.launchJob \
                 (argList=arg_list, \
                  inputFile={"name": _receptor_ligand_pdbqt_file_name, "contents":\
                      ProcessFile.encode_file(_receptor_ligand_pdbqt_file_path)})
-            print(babel_opal_response)
-            if utilities.get_status(babel_opal_response)==definitions.OPAL_SUCCESS:
+            print(babel_opal_initial_response)
+            babel_opal_jobid=babel_opal_initial_response["jobID"]
+            while True:
+                # get opal status
+                babel_opal_status_response=opal_client.service.queryStatus(babel_opal_jobid)
+                if utilities.opal_job_running(babel_opal_status_response):
+                    babel_opal_response=opal_client.service.getOutputs(babel_opal_jobid)
+                    print(babel_opal_response)
+                    break
+                else:
+                    time.sleep(definitions.OPAL_POOLING_TIME)
+            if babel_opal_status_response["code"]==definitions.OPAL_SUCCESS:
                 # save stdOut and stdErr files
                 utilities.save_std_files(babel_opal_response, _docking_folder\
                                          + definitions.FILE_SEPARATOR + "pdbqt2pdb_out")
                 # get open babel results
                 opal_pdb = ""
-                for output in babel_opal_response['jobOut']['outputFile']:
+                for output in babel_opal_response['outputFile']:
                     if output['name'] == complex_pdb_file_name:
                         opal_pdb = urllib.request.urlopen(output['url'])
                 opal_pdb_contents = opal_pdb.read()
