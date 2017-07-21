@@ -6,26 +6,41 @@
 # general
 EMAIL_ADDRESS="bac01719.yahoo.com"
 FILE_SEPARATOR='/'
-HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE=30   # sequences larger than or equal to this are part of homology template
+HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE=20   # sequences larger than or equal to this are part of homology template
 HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE=95   # sequences smaller than or equal to this are part of the homology template
 HOMOLOGY_MINIMUM_RESOLUTION=2.0 # sequences with resolutions larger than this are excluded
-OTHER_MINIMUM_RESOLUTION=2.0 # sequences with resolutions larger than this are not considered for docking or analysis
+SINGLE_HOMOLOGY_TEMPLATE=True # i.e. use a single pdb that both meets above contraint and has
+                                # the highest percentage identity for homology modelling
+OTHER_MINIMUM_RESOLUTION=2.5 # sequences with resolutions larger than this are not considered for docking or analysis
 MINIMUM_PERCENT_IDENTITY_FOR_OTHER=95   # sequences larger than or equal to this are considered for docking or analysis
 FASTA_FILE_EXTENSION=".fasta"   # fasta file extension
 BLAST_FILE_EXTENSION=".blast"   # blast file extension
 HOMOLOGY_TEMPLATE_FILE_EXTENSION=".template"    # homology template file extension
 MSA_FILE_EXTENSION=".fa" #multisequence file alignment extension (e.g. ClustalOmega)
 PDBQT_LIGAND_FILE="ligand.pdbqt"   # pdbqt file extension for ligand and receptor
+ZINC_URL="http://zinc.docking.org/results"  # ZINC database url for verifying SMILES string
+SNP_REG_EXP="(.)(\d+)(.)"   # regular expression to parse SNP used for data analysis
+MISSING_ANALYSIS_VALUE="NOT DEFINED"  # default values for SNPs not found in receptor
 
-# pdb file format
+
+
+# pdb file format for ATOM/HETATM format
 PDB_ATOM_START=1                # atom definition start
 PDB_ATOM_END=6                  # atom definition end
+PDB_RESNAME_START=18            # resName start
+PDB_RESNAME_END=20              # resName end
+PDB_CHAINID=22                  # chain id
+PDB_RESSEQ_START=23             # residue sequence number start
+PDB_RESSEQ_END=26               # residue sequence number end
 PDB_ATOM_XSTART=31              # atom x coord start. format
 PDB_ATOM_XEND=38                # atom x coord end. format
 PDB_ATOM_YSTART=39              # atom y coord start. format
 PDB_ATOM_YEND=46                # atom y coord end. format
 PDB_ATOM_ZSTART=47              # atom z coord start. format
 PDB_ATOM_ZEND=54                # atom z coord end. format
+PDB_ATOM_OCC_END=60             # occupancy end
+PDB_BFACTOR_START=61            # temperature factor start
+PDB_BFACTOR_END=66              # temperature factor end
 
 # blast module options
 BLAST_PROGRAM='blastp'   #options are blastp and blastx
@@ -57,9 +72,17 @@ DICT_RECEPTOR_CTRY="receptor_center_y"
 DICT_RECEPTOR_CTRZ="receptor_center_z"
 DICT_RECEPTOR_SIZEX="receptor_size_x"
 DICT_RECEPTOR_SIZEY="receptor_size_y"
-DICT_RECEPTOR_SIZEZ="receptor_size_z"
+DICT_RECEPTOR_SIZEZ="receptor_sizes_z"
 DICT_FASTA_LIST="fasta_list"
 DICT_FASTA_PROTEIN_FOLDER="fasta_protien_folder"
+DICT_RESNAME="res_name"
+DICT_CHAINID="chain_id"
+DICT_RESNUM="res_num"
+DICT_STABILITY_CHANGE="delta_delta_G"
+DICT_MCSM_FILE_PATH="mcsm_file_path"
+DICT_SDM_FILE_PATH="sdm_file_path"
+DICT_DUET_FILE_PATH="duet_file_path"
+DICT_MCSM_LIG_FILE_PATH="mcsm_lig_file_path"
 
 # OPAL definitions
 OPAL_CLUSTALOMEGA_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/ClustalOmegaService.xml"
@@ -105,7 +128,7 @@ PRERECEP_OPTION_PRESERVE=""         # preserve all input charges on specifc atom
 
 # clean up - multiple options can be selected. Options are
 # nphs - merge charges and remove non-polar hydrogens
-# lps - merge charges and remove lone pairs
+# lps - merge charges anmutations.csvd remove lone pairs
 # waters - remove water residues
 # nonstdres - remove chains composed entirely of residues of types other than the standard 20 amino acids
 # deleteAltB - remove XX@B atoms and rename XX@A atoms->XX
@@ -122,7 +145,23 @@ DUET_URL="http://biosig.unimelb.edu.au/duet/stability_prediction"    # website f
 CSM_LIG_URL="http://biosig.unimelb.edu.au/csm_lig/run_prediction"    # website for csm_lig server
 MCSM_LIG_URL="http://biosig.unimelb.edu.au/mcsm_lig/prediction"      # website for mcsm_lig server
 
+# bfactor replacement variables
+DUET_FILE_WILDTYPE_POS=4
+DUET_FILE_WILDTYPENO_POS=5
+DUET_FILE_CHAIN_POS=7
+MCSMLIG_FILE_WILDTYPE_POS=4
+MCSMLIG_FILE_WILDTYPENO_POS=5
+MCSMLIG_FILE_CHAIN_POS=7
+MCSM_DDG_POS=1
+SDM_DDG_POS=2
+DUET_DDG_POS=3
+MCSM_LIG_DDG_POS=3
 
+# plip website variables
+# website to study nonconvalent bond in binding site
+PLIP_URL="https://projects.biotec.tu-dresden.de/plip-web/plip/submitCalculationJob"
+PLIP_RESULTS_TITLE="<h1>Results  - <em>automation_job</em></h1>"
+PLIP_POOLING_TIME=4         # time to pool for results page
 
 
 

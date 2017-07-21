@@ -12,6 +12,7 @@ import urllib.request
 from pathlib import Path
 from Bio.PDB.PDBParser import PDBParser
 import Bio.PDB.Selection as Selection
+import library.utilities as utilities
 
 class Fasta:
     """ class to obtain FASTA from protien NCBI number"""
@@ -79,14 +80,17 @@ class Fasta:
 
     """method to obtain fasta given list of proteins and working directory"""
     @staticmethod
-    def get_fasta(protein_list,home_folder):
+    def get_fasta(protein_list,home_folder,snp=""):
         try:
             # check if home folder exist if not give error
             os.chdir(home_folder)
             local_time=time.asctime( time.localtime(time.time()))
             local_time=re.sub(r'\W+', '_', local_time)
+            snp_extension=""
+            if snp!="":
+                snp_extension=snp+"_"
             fasta_folder=home_folder.rstrip(definitions.FILE_SEPARATOR)+\
-                         definitions.FILE_SEPARATOR+'analysis_'+local_time
+                         definitions.FILE_SEPARATOR+snp_extension+'analysis_'+local_time
             fasta_sequence=''
             if not os.path.exists(fasta_folder):
                 os.mkdir(fasta_folder)
@@ -105,6 +109,13 @@ class Fasta:
                     root = xml.etree.ElementTree.fromstring(fasta_XML)
                     for tseq in root.findall('TSeq'):
                         fasta_sequence=tseq.find('TSeq_sequence').text
+                    # add single point mutation if given
+                    if snp!="":
+                        parse=re.compile("(.)(\d+)(.)")
+                        snp_items=parse.match(snp)
+                        fasta_sequence=fasta_sequence.replace(snp_items.groups()[0],\
+                                                              snp_items.groups()[2],\
+                                                              int(snp_items.groups()[1]))
                     # create fasta_protein subfolder if not exist
                     protein_subfolder =re.sub(r'\W+', '_', protein[definitions.DICT_PROTEIN_NAME])
                     fasta_protein_folder=fasta_folder+definitions.FILE_SEPARATOR+protein_subfolder
@@ -156,15 +167,16 @@ class Fasta:
             print("\nDownloading PDBs for temple\n")
             print(template_protein_names)
             for protein in template_protein_names:
-                print(protein)
-                protein_url="https://files.rcsb.org/view/"+protein+".pdb"
-                print(protein_url)
-                protein_res=urllib.request.urlopen(protein_url)
-                protein_pdb=protein_res.read().decode("utf-8")
-                protein_file_path=homology_folder+definitions.FILE_SEPARATOR+protein+".pdb"
-                protein_file=open(protein_file_path,"w")
-                protein_file.write(protein_pdb)
-                protein_file.close()
+                #print(protein)
+                #protein_url="https://files.rcsb.org/view/"+protein+".pdb"
+                #print(protein_url)
+                #protein_res=urllib.request.urlopen(protein_url)
+                #protein_pdb=protein_res.read().decode("utf-8")
+                #protein_file_path=homology_folder+definitions.FILE_SEPARATOR+protein+".pdb"
+                #protein_file=open(protein_file_path,"w")
+                #protein_file.write(protein_pdb)
+                #protein_file.close()
+                protein_file_path=utilities.download_protein(protein,homology_folder)
                 template_sequence_title = ">" + protein + "|A"
                 template_sequence_body = Fasta.__get_pdbseq(protein,protein_file_path)
                 template_file.write(template_sequence_title + "\n")

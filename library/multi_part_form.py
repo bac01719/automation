@@ -40,7 +40,7 @@ class MultiPartForm:
 
     @staticmethod
     def _attached_file(name, filename):
-        return ('Content-Disposition: file; '
+        return ('Content-Disposition: form-data; '
                 'name="{}"; filename="{}"\r\n').format(
                     name, filename).encode('utf-8')
 
