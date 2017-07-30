@@ -18,6 +18,7 @@ from library.mcsm_lig import MCSMLig
 from library.replace_bfactor import ReplaceBFactor
 from library.plip import PLIP
 import library.utilities as utilities
+import urllib.request
 import os
 import time
 from optparse import OptionParser
@@ -41,6 +42,8 @@ parser.add_option("-m","--mutation_file_path",type="string",dest="mutation_file_
 parser.add_option("-v","--snp",type="string",dest="snp",\
                   help="single point mutation for structural analysis in form of [wild type,position,snp],e.g., V183L.",\
                   default="")
+parser.add_option("-t","--templates",action="append",dest="templates",\
+                  help="override template(s) found by blast. Can use multiple templates, e.g., -t'3g89' -t'1xdz'")
 (options,args)=parser.parse_args()
 
 # check parameters
@@ -70,7 +73,7 @@ elif not os.path.exists(options.home_folder):
     sys.exit()
 elif options.mutation_file_path:
     if not os.path.exists(options.mutation_file_path):
-        print("full path to folder to store analysis results not found. For help use --help option")
+        print("full path to folder to store mutation results not found. For help use --help option")
         sys.exit()
     elif not utilities.verify_mutation_file(options.mutation_file_path):
         print("error in mutation file. For help use --help option")
@@ -80,6 +83,17 @@ elif options.snp:
     if parse.match(options.snp)==None:
         print("error in snp format. For help use --help option")
         sys.exit()
+if options.templates!=[]:
+    try:
+        for protein in options.templates:
+            print('checking forced templates %s' % protein)
+            protein_url = "https://files.rcsb.org/view/" + protein + ".pdb\n"
+            print(protein_url)
+            protein_res = urllib.request.urlopen(protein_url)
+            protein_res.close()
+    except Exception as Argument:
+        print("An error has occurred with the templare(s) proteins that override blast results %s\n\n" % Argument)
+        sys.exit()
 
 # capture arguments and set program global variables
 gene_list=Gene.get_genes(options.gene,options.organism)
@@ -87,6 +101,7 @@ ligand_smiles=options.smiles
 home_folder=options.home_folder
 mutation_file_path=options.mutation_file_path
 snp=options.snp
+forced_templates=options.templates
 
 # define global paths
 template_protein_names=[]
@@ -99,20 +114,22 @@ print("Developed by Bola Coker\n\n")
 print("References:")
 print("Zinc website - %s" % definitions.ZINC_URL)
 print("RCSB website - https://www.rcsb.org")
-print("OPAL website - http://webservices.rbvi.ucsf.edu/opal2/dashboard?command=serviceList")
+print("OPAL UCSF website - http://webservices.rbvi.ucsf.edu/opal2/dashboard?command=serviceList")
 print("PLIP website - https://projects.biotec.tu-dresden.de/plip-web/plip/")
-print("OPAL website - http://nbcr-222.ucsd.edu/opal2/dashboard?command=serviceList\n")
+print("OPAL NBCR website - http://nbcr-222.ucsd.edu/opal2/dashboard?command=serviceList")
+print("WHAT IF website 0 http://swift.cmbi.ru.nl/servers/html/index.html\n")
 
 # print start time
-print("Start : %s " % time.strftime("%Y-%m-%d %H:%M:%S"))
+print("Start : %s \n" % time.strftime("%Y-%m-%d %H:%M:%S"))
 # print inputs
 print("Command line arguments")
-print("Gene %s : " % options.gene)
-print("Organism %s : " % options.organism)
-print("Ligand SMILES %s : " % ligand_smiles)
-print("Home folder %s : " % home_folder)
-print("mutation_file_path %s : " % mutation_file_path)
-print("snp %s : \n" % snp)
+print("Gene: %s" % options.gene)
+print("Organism: %s" % options.organism)
+print("Ligand SMILES: %s" % ligand_smiles)
+print("Home folder: %s" % home_folder)
+print("mutation_file_path: %s" % mutation_file_path)
+print("snp: %s" % snp)
+print("forced template: %s\n" % options.templates)
 # get protein of gene
 protein_list=Protein.get_proteins(gene_list)
 # Get fasta of protein.
@@ -123,11 +140,14 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
     blast_list=Blast.do_blast(fasta_item[definitions.DICT_FASTA_FILE_PATH],\
                               definitions.BLAST_PERCENTAGE_IDENTITY_CUTOFF,ligand_smiles)
     print("blast results")
-    print("lower percentage identity for homology %s" % str(definitions.HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE))
-    print("upper percentage identity for homology %s" % str(definitions.HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE))
-    print("minimum resoultion for homology %s" % str(definitions.HOMOLOGY_MINIMUM_RESOLUTION))
-    print("minimum percentage identity to bypass homology %s" % str(definitions.MINIMUM_PERCENT_IDENTITY_FOR_OTHER))
-    print("minimum resolution to bypass homology %s\n" % str(definitions.OTHER_MINIMUM_RESOLUTION))
+    print("lower percentage identity for homology: %s" % str(definitions.HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE))
+    print("upper percentage identity for homology: %s" % str(definitions.HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE))
+    print("minimum resoultion for homology: %s" % str(definitions.HOMOLOGY_MINIMUM_RESOLUTION))
+    print("minimum percentage identity to bypass homology: %s" % str(definitions.MINIMUM_PERCENT_IDENTITY_FOR_OTHER))
+    print("minimum resolution to bypass homology: %s" % str(definitions.OTHER_MINIMUM_RESOLUTION))
+    print("single template homology: %s" % str(definitions.SINGLE_HOMOLOGY_TEMPLATE))
+    print("BLAST service : %s" % definitions.BLAST_SERVICE)
+    print("format below (percentage identity, resolution, evalue, if pdb contains SMILES)\n")
     if len(blast_list)>0:
         for blast in blast_list:
             if (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]>=definitions.HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE \
@@ -136,11 +156,13 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
                     and blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]<=definitions.HOMOLOGY_MINIMUM_RESOLUTION:
                 template_protein_names.append({ definitions.DICT_BLAST_PROTEIN: blast[definitions.DICT_BLAST_PROTEIN],\
                                                definitions.DICT_BLAST_PERCENTAGE_IDENTITY :\
-                                                   blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]})
+                                                   blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY],\
+                                                definitions.DICT_BLAST_EVALUE: blast[definitions.DICT_BLAST_EVALUE]})
                 print("%s :" % blast[definitions.DICT_BLAST_PROTEIN], end="")
-                print("********Homology modelling next (%s%%,%s,%s) **************" % \
+                print("********Homology modelling next (%s%%,%s,%s,%s) **************" % \
                       (blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY],
                        blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION],
+                       blast[definitions.DICT_BLAST_EVALUE],
                        blast[definitions.DICT_BLAST_SMILES_FOUND]))
             elif blast[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]>=definitions.MINIMUM_PERCENT_IDENTITY_FOR_OTHER and \
                     blast[definitions.DICT_BLAST_PROTEIN_RESOLUTION]<=definitions.OTHER_MINIMUM_RESOLUTION:
@@ -172,15 +194,25 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
               definitions.BLAST_PERCENTAGE_IDENTITY_CUTOFF)
     # homology processing
     if len(template_protein_names)>0:
-        # single template homology required
-        # select protein with max alignment
-        max_identity=0
-        template_protein_names_2=template_protein_names
-        if definitions.SINGLE_HOMOLOGY_TEMPLATE:    # otherwise use multiple segments for homology
-            for template in template_protein_names:
-                if template[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]>max_identity:
-                    max_identity=template[definitions.DICT_BLAST_PERCENTAGE_IDENTITY]
-                    template_protein_names_2=[template[definitions.DICT_BLAST_PROTEIN]]
+        template_protein_names_2 = []
+        if forced_templates==[]:
+            # blast template not ot be overridden
+            min_identity=99
+            if definitions.SINGLE_HOMOLOGY_TEMPLATE:
+                # single template homology required
+                # select protein with min evalue
+                for template in template_protein_names:
+                    if template[definitions.DICT_BLAST_EVALUE]<min_identity:
+                        min_identity=template[definitions.DICT_BLAST_EVALUE]
+                        template_protein_names_2=[template[definitions.DICT_BLAST_PROTEIN]]
+            else:
+                # otherwise use multiple segments for homology
+                for template in template_protein_names:
+                    template_protein_names_2.append(template[definitions.DICT_BLAST_PROTEIN])
+        else:
+            print("\nBLAST templates overriden with")
+            print("%s\n" % forced_templates)
+            template_protein_names_2=forced_templates
         # save templates into fasta file path
         template_file_path=Fasta.get_templates(template_protein_names_2,fasta_item)
         # do multiple sequence alignment and save file
@@ -229,6 +261,30 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
                             data_analysis_complex_names.append(data_analysis_complex_file_path)
                             # fourth produce PLIP file
                             plip_object=PLIP(data_analysis_complex_file_path)
+                            # fifth produce whatif services
+                            whatif_usefiledb_path=utilities.save_whatif_ws(definitions.WHATIF_USEFILEDB,\
+                                                                           data_analysis_complex_file_path)
+                            whatif_showdrugcontacts_path =\
+                                utilities.save_whatif_ws(definitions.WHATIF_SHOWDRUGCONTACTS,\
+                                                         data_analysis_complex_file_path)
+                            whatif_showdrugcontactsshort_path = \
+                                utilities.save_whatif_ws(definitions.WHATIF_SHOWDRUGCONTACTSSHORT, \
+                                                         data_analysis_complex_file_path)
+                            whatif_showligandcontacts_path = \
+                                utilities.save_whatif_ws(definitions.WHATIF_SHOWLIGANDCONTACTS, \
+                                                         data_analysis_complex_file_path)
+                            whatif_showsaltbridges_path = \
+                                utilities.save_whatif_ws(definitions.WHATIF_SHOWSALTBRIDGES, \
+                                                         data_analysis_complex_file_path)
+                            whatif_showsaltbridgesh_path = \
+                                utilities.save_whatif_ws(definitions.WHATIF_SHOWSALTBRIDGESH, \
+                                                         data_analysis_complex_file_path)
+                            whatif_showhydrogenbonds_path = \
+                                utilities.save_whatif_ws(definitions.WHATIF_SHOWHYDROGENBONDS, \
+                                                         data_analysis_complex_file_path)
+                            whatif_showhydrogenbondsm_path = \
+                                utilities.save_whatif_ws(definitions.WHATIF_SHOWHYDROGENBONDSM, \
+                                                         data_analysis_complex_file_path)
                         else:
                             # an error occurred
                             print("Error with vina Opal web service")
@@ -253,18 +309,17 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
             complex_pdb_name=os.path.basename(data_analysis_complex_file_path).replace(".pdb","")
             complex_data_analysis_folder=data_analysis_folder+definitions.FILE_SEPARATOR+complex_pdb_name
             # perform duet analysis
-            duet_analysis_object=Duet(complex_data_analysis_folder,data_analysis_complex_file_path)
+            duet_analysis_object=Duet(complex_data_analysis_folder,data_analysis_complex_file_path,\
+                                      mutation_file_path)
             duet_csv_file_path=duet_analysis_object.get_file_path()
             # perform mcsm_lig analysis
             mcsm_lig_analysis_object=MCSMLig(complex_data_analysis_folder,data_analysis_complex_file_path,\
                                               mutation_file_path,"LIG",ligand_smiles)
             mcsm_lig_csv_file_path=mcsm_lig_analysis_object.get_file_path()
-            # replace bfactor pdb field with values from mCSM,SDM,DUET and mCSM_Lig
+            #replace bfactor pdb field with values from mCSM,SDM,DUET and mCSM_Lig
             replace_bfactor_analysis_object=ReplaceBFactor(data_analysis_complex_file_path,duet_csv_file_path,\
                                                            mcsm_lig_csv_file_path)
-
 # print end
 print("End  : %s " % time.strftime("%Y-%m-%d %H:%M:%S"))
-
 
 

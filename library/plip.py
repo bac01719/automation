@@ -16,6 +16,8 @@ import time
 class PLIP:
     """ Easy and fast identification of noncovalent interactions between proteins and their ligands"""
 
+    global _xml_file_path
+
     """ initialise clas with full path name of complex file """
     def __init__(self,data_analysis_complex_file_path):
         print("\nObtaining noncovalent interactions between protein and ligand\n")
@@ -58,8 +60,8 @@ class PLIP:
                     plip_xml_content=plip_xml.read().decode("utf-8")
                     print(plip_xml.read().decode("utf-8"))
                     # store xml to file
-                    xml_file_path=data_analysis_complex_file_path.replace(".pdb","_plip.xml")
-                    xml_file=open(xml_file_path,'w')
+                    _xml_file_path=data_analysis_complex_file_path.replace(".pdb","_plip.xml")
+                    xml_file=open(_xml_file_path,'w')
                     xml_file.write(plip_xml_content)
                     xml_file.close()
                     break
@@ -69,5 +71,7 @@ class PLIP:
             print("An error has occurred \n%s" % Argument)
             raise
 
-
+    def get_file_path(self):
+        global _xml_file_path
+        return _xml_file_path
 

@@ -164,7 +164,7 @@ class Fasta:
             template_file_path = homology_folder + definitions.FILE_SEPARATOR + template_file_name
             template_file = open(template_file_path, "w")
             # download proteins in template_protein_names list and update template file
-            print("\nDownloading PDBs for temple\n")
+            print("\nDownloading PDBs for template\n")
             print(template_protein_names)
             for protein in template_protein_names:
                 #print(protein)

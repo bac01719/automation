@@ -73,7 +73,7 @@ class Vina:
                     print(_vina_opal_response)
                     break
                 else:
-                    time.sleep(definitions.OPAL_POOLING_TIME)
+                    time.sleep(definitions.OPAL_POOLING_TIME_VINA)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise

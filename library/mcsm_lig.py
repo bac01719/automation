@@ -36,6 +36,9 @@ class MCSMLig:
             # read in protein contents
             with open(complex_pdb_file_path, 'r') as complex_pdb_file:
                 _complex_pdb_file_contents = complex_pdb_file.read()
+            # check data analysis folder parent folder does not exist otherwise create
+            if not os.path.exists(os.path.dirname(data_analysis_folder)):
+                os.mkdir(os.path.dirname(data_analysis_folder))
             # check data analysis folder exist otherwise create
             if not os.path.exists(data_analysis_folder):
                 os.mkdir(data_analysis_folder)
@@ -92,8 +95,13 @@ class MCSMLig:
             mcsm_lig_results.add_header('Content-length', len(data_bytes))
             mcsm_lig_response = urllib.request.urlopen(mcsm_lig_results)
         except Exception as Argument:
+            # error not raised as error could be due to snp
             print("An error has occurred \n%s" % Argument)
-            raise
+            return (_complex_pdb_file_name, _csm_lig_pred_affinity, wild_type_affinity,\
+                    definitions.SERVER_ERROR, definitions.SERVER_ERROR, definitions.SERVER_ERROR, \
+                    definitions.SERVER_ERROR, definitions.SERVER_ERROR, definitions.SERVER_ERROR, \
+                    definitions.SERVER_ERROR, definitions.SERVER_ERROR)
+            #raise
         # Obtain response
         pred_affin_change_value = definitions.MISSING_ANALYSIS_VALUE
         wild_type_value = definitions.MISSING_ANALYSIS_VALUE

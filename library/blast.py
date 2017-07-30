@@ -20,7 +20,8 @@ class Blast:
     or complexes found that can go straight to data analysis, InChI of ligand    
     """
     @staticmethod
-    def do_blast(protein_sequence_file_path,percentage_identity_cutoff,smiles):
+    def do_blast(protein_sequence_file_path,percentage_identity_cutoff,smiles,\
+                 service_method=definitions.BLAST_SERVICE):
         try:
             # open fasta file and read it
             fasta_file=open(protein_sequence_file_path,'r')
@@ -33,7 +34,7 @@ class Blast:
             blast_file=open(blast_file_path,'w')
             # do blast
             result_handle = NCBIWWW.qblast(definitions.BLAST_PROGRAM, 'pdb', fasta_sequence,
-                                           perc_ident=percentage_identity_cutoff)
+                                           perc_ident=percentage_identity_cutoff, service=service_method)
             blast_records = NCBIXML.parse(result_handle)
             # initialise blast list to return results
             blast_list = []
@@ -104,7 +105,8 @@ class Blast:
                             blast_list.append({definitions.DICT_BLAST_PROTEIN:blast_protein,
                             definitions.DICT_BLAST_PERCENTAGE_IDENTITY:round(percentage_identity,2),
                             definitions.DICT_BLAST_PROTEIN_RESOLUTION:float(pdb_resolution),
-                            definitions.DICT_BLAST_SMILES_FOUND:(ligand_smiles==smiles)})
+                            definitions.DICT_BLAST_SMILES_FOUND:(ligand_smiles==smiles),
+                            definitions.DICT_BLAST_EVALUE: hsp.expect})
             blast_file.close()
             result_handle.close()
             return blast_list

@@ -6,10 +6,10 @@
 # general
 EMAIL_ADDRESS="bac01719.yahoo.com"
 FILE_SEPARATOR='/'
-HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE=20   # sequences larger than or equal to this are part of homology template
+HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE=30   # sequences larger than or equal to this are part of homology template
 HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE=95   # sequences smaller than or equal to this are part of the homology template
-HOMOLOGY_MINIMUM_RESOLUTION=2.0 # sequences with resolutions larger than this are excluded
-SINGLE_HOMOLOGY_TEMPLATE=True # i.e. use a single pdb that both meets above contraint and has
+HOMOLOGY_MINIMUM_RESOLUTION=2.5 # sequences with resolutions larger than this are excluded
+SINGLE_HOMOLOGY_TEMPLATE=False # i.e. use a single pdb that both meets above contraint and has
                                 # the highest percentage identity for homology modelling
 OTHER_MINIMUM_RESOLUTION=2.5 # sequences with resolutions larger than this are not considered for docking or analysis
 MINIMUM_PERCENT_IDENTITY_FOR_OTHER=95   # sequences larger than or equal to this are considered for docking or analysis
@@ -21,8 +21,7 @@ PDBQT_LIGAND_FILE="ligand.pdbqt"   # pdbqt file extension for ligand and recepto
 ZINC_URL="http://zinc.docking.org/results"  # ZINC database url for verifying SMILES string
 SNP_REG_EXP="(.)(\d+)(.)"   # regular expression to parse SNP used for data analysis
 MISSING_ANALYSIS_VALUE="NOT DEFINED"  # default values for SNPs not found in receptor
-
-
+SERVER_ERROR="SERVER ERROR" # server error
 
 # pdb file format for ATOM/HETATM format
 PDB_ATOM_START=1                # atom definition start
@@ -43,7 +42,8 @@ PDB_BFACTOR_START=61            # temperature factor start
 PDB_BFACTOR_END=66              # temperature factor end
 
 # blast module options
-BLAST_PROGRAM='blastp'   #options are blastp and blastx
+BLAST_PROGRAM='blastp'   #options are blastp and blastx (using nucleotide extension) in lower case
+BLAST_SERVICE='psi' # options are plain, psi, megablast in lower case
 BLAST_PERCENTAGE_IDENTITY_CUTOFF=30     # sequences above or equal to this figure are returned by BLAST
 
 # homology module
@@ -63,9 +63,10 @@ DICT_BLAST_PERCENTAGE_IDENTITY="blast_percentage_identity"
 DICT_BLAST_PROTEIN="blast_protein"
 DICT_BLAST_SMILES_FOUND="blast_smiles_found"
 DICT_BLAST_PROTEIN_RESOLUTION="blast_protein_resolution"
+DICT_BLAST_EVALUE="blast_evalue"
 DICT_FASTA_SEQUENCE="fasta"
 DICT_FASTA_FILE_PATH="fasta_file_path"
-DICT_HOMOLOGY_ZDOPE="max_zDOPE"
+DICT_HOMOLOGY_ZDOPE="min_zDOPE"
 DICT_HOMOLOGY_BEST_PATH="best_homology_file_path"
 DICT_RECEPTOR_CTRX="receptor_center_x"
 DICT_RECEPTOR_CTRY="receptor_center_y"
@@ -94,6 +95,7 @@ OPAL_VINA_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/vina
 OPAL_SUCCESS=8  # success code from opal servers
 OPAL_FAILURE=4  # failure code from opal servers
 OPAL_POOLING_TIME=4 # time interval for pooling opal server
+OPAL_POOLING_TIME_VINA=120 # time interval for pooling opal server for vina
 
 # ClustalOmega keys
 CLUSTAL_OMEGA_DEALIGN=True   # Dealign input sequences
@@ -162,6 +164,18 @@ MCSM_LIG_DDG_POS=3
 PLIP_URL="https://projects.biotec.tu-dresden.de/plip-web/plip/submitCalculationJob"
 PLIP_RESULTS_TITLE="<h1>Results  - <em>automation_job</em></h1>"
 PLIP_POOLING_TIME=4         # time to pool for results page
+
+# what-if webservice
+WHATIF_UPLOADPDB="http://wiws.cmbi.ru.nl/rest/UploadPDB"
+WHATIF_REST="http://wiws.cmbi.ru.nl/rest/"
+WHATIF_USEFILEDB="UseFileDB"
+WHATIF_SHOWDRUGCONTACTS="ShowDrugContacts"
+WHATIF_SHOWDRUGCONTACTSSHORT="ShowDrugContactsShort"
+WHATIF_SHOWLIGANDCONTACTS="ShowLigandContacts"
+WHATIF_SHOWSALTBRIDGES="ShowSaltBridges"
+WHATIF_SHOWSALTBRIDGESH="ShowSaltBridgesH"
+WHATIF_SHOWHYDROGENBONDS="ShowHydrogenBonds"
+WHATIF_SHOWHYDROGENBONDSM="ShowHydrogenBondsM"
 
 
 

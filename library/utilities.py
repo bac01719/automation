@@ -8,6 +8,8 @@ import library.definitions as definitions
 from Bio import Entrez
 import os
 import re
+import xml.dom.minidom
+from pathlib import Path
 
 """ function to return a string given a dictionary """
 def return_string(dictionary_list):
@@ -150,6 +152,79 @@ def verify_mutation_file(mutation_file_path):
         raise
     finally:
         return verified
+
+""" functiom to call WhatIF web service and store file """
+""" modified from WhatIF http://swift.cmbi.ru.nl/whatif/HTML/what-if-web-service-sample-scripts.tgz """
+def save_whatif_ws(whatif_service,complex_file_path):
+    print("\nWhatIf service: %s" % whatif_service)
+    try:
+        # read complex
+        complex_file=open(complex_file_path,"r")
+        complex_file_content=complex_file.read().encode("utf-8")
+        complex_file.close()
+        # upload PDB file to What IF webservice
+        whatif_pdb = urllib.request.urlopen(definitions.WHATIF_UPLOADPDB, complex_file_content)
+        whatif_pdb_xml = xml.dom.minidom.parse(whatif_pdb)
+        whatif_pdb_id = whatif_pdb_xml.getElementsByTagName("response")[0].childNodes[0].data
+        print("WhatIf protein id: %s" % whatif_pdb_id)
+        # call web service
+        whatif_service_url=definitions.WHATIF_REST+whatif_service+"/id/"+whatif_pdb_id
+        print("WhatIf service url: %s\n" % whatif_service_url)
+        whatif_response = urllib.request.urlopen(whatif_service_url)
+        # store response in file
+        whatif_folder=os.path.dirname(complex_file_path)+definitions.FILE_SEPARATOR+"whatif"
+        if not os.path.exists(whatif_folder):
+            os.mkdir(whatif_folder)
+        whatif_file_name=os.path.basename(complex_file_path).replace(".pdb","_"+whatif_service+".xml")
+        whatif_file_path=whatif_folder+definitions.FILE_SEPARATOR+whatif_file_name
+        whatif_file=open(whatif_file_path,"w")
+        whatif_file.write(whatif_response.read().decode("utf-8"))
+        whatif_file.close()
+        return whatif_file_path
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
+
+""" function to create pdb  file from vina's pdbqt protein and files """
+def create_complex_pdb(poses_file_path,receptor_pdbqt_file_path):
+    try:
+        # obtain docking folder
+        docking_folder=os.path.dirname(poses_file_path)
+        # open poses file
+        poses_file = open(poses_file_path, 'r')
+        # write complex pdbqt
+        # by copying receptor pdbqt and first pose to a new ligand_receptor pdbqt
+        receptor_ligand_pdbqt_file_name = Path(receptor_pdbqt_file_path).name. \
+            replace(".pdbqt", "_ligand.pdbqt")
+        receptor_ligand_pdbqt_file_path = docking_folder + definitions.FILE_SEPARATOR + \
+                                           receptor_ligand_pdbqt_file_name
+        receptor_ligand_pdbqt = open(receptor_ligand_pdbqt_file_path, "w")
+        with open(receptor_pdbqt_file_path, "r") as receptor_pdbqt:
+            for line in receptor_pdbqt:
+                receptor_ligand_pdbqt.write(line)
+        poses_file.seek(0)
+        # change ATOM in ligand.pdbqt file to HETATM
+        # assign ligand to chain A
+        while True:
+            line = poses_file.readline()
+            line = line.replace("LIG    1", "LIG A  1")
+            "LIG    1"
+            if line != "MODEL 2\n":
+                if line.count("ATOM      ") == 1:
+                    receptor_ligand_pdbqt.write(line.replace("ATOM      ", "HETATM    "))
+                elif line.count("ATOM     ") == 1:
+                    receptor_ligand_pdbqt.write(line.replace("ATOM     ", "HETATM   "))
+                else:
+                    receptor_ligand_pdbqt.write(line)
+            else:
+                break
+        # close files
+        poses_file.close()
+        receptor_ligand_pdbqt.close()
+        return receptor_ligand_pdbqt_file_path
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
 
 
 

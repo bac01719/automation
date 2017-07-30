@@ -24,18 +24,22 @@ class Duet:
         global _complex_pdb_file_path  
         global _complex_pdb_file_contents
         global _complex_pdb_file_name
+        global _duet_results_file_path
         _complex_pdb_file_path=complex_pdb_file_path
         print("\nMutation analysis using DUET website\n")
         try:
             # read in protein contents
             with open(complex_pdb_file_path, 'r') as complex_pdb_file:
                 _complex_pdb_file_contents = complex_pdb_file.read()
+            # check data analysis folder parent folder does not exist otherwise create
+            if not os.path.exists(os.path.dirname(data_analysis_folder)):
+                os.mkdir(os.path.dirname(data_analysis_folder))
             # check data analysis folder exist otherwise create
             if not os.path.exists(data_analysis_folder):
                 os.mkdir(data_analysis_folder)
             # create DUET csv file
-            duet_results_file_path = data_analysis_folder+definitions.FILE_SEPARATOR+"duet_analysis.csv"
-            duet_results_file = open(duet_results_file_path, 'w')
+            _duet_results_file_path = data_analysis_folder+definitions.FILE_SEPARATOR+"duet_analysis.csv"
+            duet_results_file = open(_duet_results_file_path, 'w')
             duet_results_file.write(
                 'PDB,' + 'mCSM,' + 'SDM,' + 'DUET,' + 'WildType,' + 'Position,' + 'MutantType,' + 'Chain,' + \
                 'RelativeSolventAccessibility,' + 'SecondaryStructure,' + 'SideChainHydrogenBond,' + '\n')
