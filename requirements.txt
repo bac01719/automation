@@ -1,0 +1,4 @@
+beautifulsoup4==4.5.3
+biopython==1.69
+lxml==3.7.3
+zeep==2.0.0
