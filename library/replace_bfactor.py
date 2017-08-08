@@ -26,6 +26,7 @@ class ReplaceBFactor:
         global _pdb_duet_file_path
         global _pdb_mcsm_lig_file_path
         _complex_pdb_file_path=complex_pdb_file_path
+        print("Replace B factor in protein files\n\n")
         try:
             complex_file_name=os.path.basename(complex_pdb_file_path)
             data_analysis_folder=os.path.dirname(duet_csv_file_path)
@@ -57,27 +58,28 @@ class ReplaceBFactor:
                         # skip header
                         continue
                     line_items=line.split(",")
-                    duet_key = line_items[definitions.DUET_FILE_CHAIN_POS] +\
-                              "_" + line_items[definitions.DUET_FILE_WILDTYPENO_POS]
-                    mcsm_matches = reg_exp.findall(line_items[definitions.MCSM_DDG_POS])
-                    sdm_matches = reg_exp.findall(line_items[definitions.SDM_DDG_POS])
-                    duet_matches = reg_exp.findall(line_items[definitions.DUET_DDG_POS])
-                    mcsm_dictionary[duet_key]=\
-                        {definitions.DICT_RESNAME: line_items[definitions.DUET_FILE_WILDTYPE_POS],\
-                         definitions.DICT_CHAINID: line_items[definitions.DUET_FILE_CHAIN_POS],\
-                         definitions.DICT_RESNUM: line_items[definitions.DUET_FILE_WILDTYPENO_POS],\
-                         definitions.DICT_STABILITY_CHANGE: mcsm_matches[0]}
-                    sdm_dictionary[duet_key] = \
-                        {definitions.DICT_RESNAME: line_items[definitions.DUET_FILE_WILDTYPE_POS], \
-                         definitions.DICT_CHAINID: line_items[definitions.DUET_FILE_CHAIN_POS], \
-                         definitions.DICT_RESNUM: line_items[definitions.DUET_FILE_WILDTYPENO_POS], \
-                         definitions.DICT_STABILITY_CHANGE: sdm_matches[0]}
-                    duet_dictionary[duet_key] = \
-                        {definitions.DICT_RESNAME: line_items[definitions.DUET_FILE_WILDTYPE_POS], \
-                         definitions.DICT_CHAINID: line_items[definitions.DUET_FILE_CHAIN_POS], \
-                         definitions.DICT_RESNUM: line_items[definitions.DUET_FILE_WILDTYPENO_POS], \
-                         definitions.DICT_STABILITY_CHANGE: duet_matches[0]}
-                    print("Reading mutation (%s) %s " % ("DUET CSV", duet_key))
+                    if len(line_items)==11: # line has been split properly
+                        duet_key = line_items[definitions.DUET_FILE_CHAIN_POS] +\
+                                  "_" + line_items[definitions.DUET_FILE_WILDTYPENO_POS]
+                        mcsm_matches = reg_exp.findall(line_items[definitions.MCSM_DDG_POS])
+                        sdm_matches = reg_exp.findall(line_items[definitions.SDM_DDG_POS])
+                        duet_matches = reg_exp.findall(line_items[definitions.DUET_DDG_POS])
+                        mcsm_dictionary[duet_key]=\
+                            {definitions.DICT_RESNAME: line_items[definitions.DUET_FILE_WILDTYPE_POS],\
+                             definitions.DICT_CHAINID: line_items[definitions.DUET_FILE_CHAIN_POS],\
+                             definitions.DICT_RESNUM: line_items[definitions.DUET_FILE_WILDTYPENO_POS],\
+                             definitions.DICT_STABILITY_CHANGE: mcsm_matches[0]}
+                        sdm_dictionary[duet_key] = \
+                            {definitions.DICT_RESNAME: line_items[definitions.DUET_FILE_WILDTYPE_POS], \
+                             definitions.DICT_CHAINID: line_items[definitions.DUET_FILE_CHAIN_POS], \
+                             definitions.DICT_RESNUM: line_items[definitions.DUET_FILE_WILDTYPENO_POS], \
+                             definitions.DICT_STABILITY_CHANGE: sdm_matches[0]}
+                        duet_dictionary[duet_key] = \
+                            {definitions.DICT_RESNAME: line_items[definitions.DUET_FILE_WILDTYPE_POS], \
+                             definitions.DICT_CHAINID: line_items[definitions.DUET_FILE_CHAIN_POS], \
+                             definitions.DICT_RESNUM: line_items[definitions.DUET_FILE_WILDTYPENO_POS], \
+                             definitions.DICT_STABILITY_CHANGE: duet_matches[0]}
+                        print("Reading mutation (%s) %s " % ("DUET CSV", duet_key))
             # create dictionary list for MCSM-LIG CSV file
             mcsm_lig_dictionary = {}
             # iterate through csm_lig csv file

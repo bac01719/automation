@@ -61,26 +61,46 @@ class Fasta:
             aa_code = "S"
         elif str(amino_acid).upper() == "THR":
             aa_code = "T"
+        # account for pecularities of modeller
+        # https://salilab.org/modeller/9.9/manual/node171.html
+        elif str(amino_acid).upper() == "MSE":  # convert ligand MSE to MET
+            aa_code = "M"
+        elif str(amino_acid).upper() == "MEX":  # convert ligand MEX to CYS
+            aa_code = "C"
+        elif str(amino_acid).upper() == "ABU":  # convert ligand ABU to CYS
+            aa_code = "C"
         else:
             aa_code = "-"
         return aa_code
 
-    """ method to return amino acid sequence with coords in pdf file """
+    """ method to return amino acid sequence with coords in pdf file 
+        uses Biopython checks
+    """
     @staticmethod
     def __get_pdbseq(protein, protein_file_path):
-        pdb_object = PDBParser(PERMISSIVE=True, QUIET=True)
-        pdb_structure = pdb_object.get_structure(protein, protein_file_path)
-        pdb_fasta = ""
-        for residue in Selection.unfold_entities(pdb_structure, "R"):
-            # print(residue.get_full_id())
-            if residue.get_full_id()[3][0] == " " and residue.get_full_id()[2] == "A":
-                pdb_fasta += Fasta.__get_aa_code(residue.get_resname())
-                # print("-- %s , %s \n" % (residue.get_resname(),get_aa_code(residue.get_resname())))
-        return pdb_fasta
+        try:
+            pdb_object = PDBParser(PERMISSIVE=definitions.PDB_PERMISSIVE,\
+                                   QUIET=definitions.PDB_QUIET)
+            pdb_structure = pdb_object.get_structure(protein, protein_file_path)
+            pdb_fasta = ""
+            for residue in Selection.unfold_entities(pdb_structure, "R"):
+                # print(residue.get_full_id())
+                if ((residue.get_full_id()[3][0] == " " or residue.get_full_id()[3][0] in ['H_MSE','H_MEX','H_ABU'])\
+                        and residue.get_full_id()[2] == "A"):
+                    pdb_fasta += Fasta.__get_aa_code(residue.get_resname())
+                    # print("-- %s , %s \n" % (residue.get_resname(),get_aa_code(residue.get_resname())))
+            print("%s residues from chain A read for %s" % (str(len(pdb_fasta)),protein))
+            return pdb_fasta
+        except Exception as Argument:
+            print("An error has occurred \n%s" % Argument)
+            print("PDB file %s excluded from analysis" % protein)
+
+
 
     """method to obtain fasta given list of proteins and working directory"""
     @staticmethod
     def get_fasta(protein_list,home_folder,snp=""):
+        fasta_protein_sequence_folder=""
         try:
             # check if home folder exist if not give error
             os.chdir(home_folder)

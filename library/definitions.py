@@ -23,6 +23,10 @@ SNP_REG_EXP="(.)(\d+)(.)"   # regular expression to parse SNP used for data anal
 MISSING_ANALYSIS_VALUE="NOT DEFINED"  # default values for SNPs not found in receptor
 SERVER_ERROR="SERVER ERROR" # server error
 
+# bio-python options to read pdb files
+PDB_PERMISSIVE=True    # If True then PDB files that contain errors are corrected
+PDB_QUIET=True # If False then errors in PDB are listed in the output
+
 # pdb file format for ATOM/HETATM format
 PDB_ATOM_START=1                # atom definition start
 PDB_ATOM_END=6                  # atom definition end
@@ -43,7 +47,7 @@ PDB_BFACTOR_END=66              # temperature factor end
 
 # blast module options
 BLAST_PROGRAM='blastp'   #options are blastp and blastx (using nucleotide extension) in lower case
-BLAST_SERVICE='psi' # options are plain, psi, megablast in lower case
+BLAST_SERVICE='plain' # options are plain, psi, megablast in lower case
 BLAST_PERCENTAGE_IDENTITY_CUTOFF=30     # sequences above or equal to this figure are returned by BLAST
 
 # homology module
@@ -94,8 +98,8 @@ OPAL_PREPRECEP_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd
 OPAL_VINA_WSDL="/home/bola/Documents/Private/BBK/project/python/library/xsd/vina_1.1.2.xml"
 OPAL_SUCCESS=8  # success code from opal servers
 OPAL_FAILURE=4  # failure code from opal servers
-OPAL_POOLING_TIME=4 # time interval for pooling opal server
-OPAL_POOLING_TIME_VINA=120 # time interval for pooling opal server for vina
+OPAL_POOLING_TIME=4 # time interval in seconds for pooling opal server
+OPAL_POOLING_TIME_VINA=1800 # time interval in seconds for pooling opal server for vina
 
 # ClustalOmega keys
 CLUSTAL_OMEGA_DEALIGN=True   # Dealign input sequences

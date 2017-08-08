@@ -83,7 +83,7 @@ elif options.snp:
     if parse.match(options.snp)==None:
         print("error in snp format. For help use --help option")
         sys.exit()
-if options.templates!=[]:
+if options.templates!=None:
     try:
         for protein in options.templates:
             print('checking forced templates %s' % protein)
@@ -132,6 +132,8 @@ print("snp: %s" % snp)
 print("forced template: %s\n" % options.templates)
 # get protein of gene
 protein_list=Protein.get_proteins(gene_list)
+print("Protein being processed")
+print(protein_list)
 # Get fasta of protein.
 fasta_list=Fasta.get_fasta(protein_list,home_folder,snp)
 for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
@@ -139,7 +141,7 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
     # blast fast to get templates for homologue processing also check if pdb found includes SMILES string of ligand
     blast_list=Blast.do_blast(fasta_item[definitions.DICT_FASTA_FILE_PATH],\
                               definitions.BLAST_PERCENTAGE_IDENTITY_CUTOFF,ligand_smiles)
-    print("blast results")
+    print("Blast results")
     print("lower percentage identity for homology: %s" % str(definitions.HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE))
     print("upper percentage identity for homology: %s" % str(definitions.HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE))
     print("minimum resoultion for homology: %s" % str(definitions.HOMOLOGY_MINIMUM_RESOLUTION))
@@ -195,7 +197,7 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
     # homology processing
     if len(template_protein_names)>0:
         template_protein_names_2 = []
-        if forced_templates==[]:
+        if forced_templates==None:
             # blast template not ot be overridden
             min_identity=99
             if definitions.SINGLE_HOMOLOGY_TEMPLATE:

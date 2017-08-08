@@ -32,6 +32,21 @@ class Blast:
             blast_file_path=protein_sequence_file_path.replace(definitions.FASTA_FILE_EXTENSION,\
                                                                definitions.BLAST_FILE_EXTENSION)
             blast_file=open(blast_file_path,'w')
+            # write parameters used for blast
+            blast_file.write("****Blast Parameters****\n\n")
+            blast_file.write("lower percentage identity for homology: %s\n" %\
+                             str(definitions.HOMOLOGY_PERCENT_IDENTITY_LOWER_RANGE))
+            blast_file.write("upper percentage identity for homology: %s\n" %\
+                             str(definitions.HOMOLOGY_PERCENT_IDENTITY_UPPER_RANGE))
+            blast_file.write("minimum resoultion for homology: %s\n" %\
+                             str(definitions.HOMOLOGY_MINIMUM_RESOLUTION))
+            blast_file.write("minimum percentage identity to bypass homology: %s\n"\
+                             % str(definitions.MINIMUM_PERCENT_IDENTITY_FOR_OTHER))
+            blast_file.write("minimum resolution to bypass homology: %s\n" %\
+                             str(definitions.OTHER_MINIMUM_RESOLUTION))
+            blast_file.write("single template homology: %s\n" %\
+                             str(definitions.SINGLE_HOMOLOGY_TEMPLATE))
+            blast_file.write("BLAST service : %s\n\n" % definitions.BLAST_SERVICE)
             # do blast
             result_handle = NCBIWWW.qblast(definitions.BLAST_PROGRAM, 'pdb', fasta_sequence,
                                            perc_ident=percentage_identity_cutoff, service=service_method)
