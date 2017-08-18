@@ -160,8 +160,11 @@ class Vina:
                     # assign ligand to chain A
                     while True:
                         line=poses_file.readline()
+                        if line == "MODEL 1\n":
+                            line = "REMARK MODEL 1\n"
+                        if line == "ENDMDL\n":
+                            line = "REMARK ENDMDL\n"
                         line=line.replace("LIG    1","LIG A  1")
-                        "LIG    1"
                         if line != "MODEL 2\n":
                             if line.count("ATOM      ") == 1:
                                 receptor_ligand_pdbqt.write(line.replace("ATOM      ", "HETATM    "))

@@ -3,7 +3,8 @@ import mimetypes
 import uuid
 
 class MultiPartForm:
-    """Accumulate the data to be used when posting a form."""
+    """Accumulate the data to be used when posting a form.
+	https://pymotw.com/3/urllib.request/"""
 
     def __init__(self):
         self.form_fields = []

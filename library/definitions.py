@@ -181,6 +181,11 @@ WHATIF_SHOWSALTBRIDGESH="ShowSaltBridgesH"
 WHATIF_SHOWHYDROGENBONDS="ShowHydrogenBonds"
 WHATIF_SHOWHYDROGENBONDSM="ShowHydrogenBondsM"
 
+# bfactor normalisation range
+BFACTOR_NORM_START=-1    # botton range of normalised b factors
+BFACTOR_NORM_END=1      # top range of normalised b factors
+
+
 
 
 

@@ -244,7 +244,7 @@ for fasta_item in fasta_list[definitions.DICT_FASTA_LIST]:
         open_babel_object=OpenBabel(ligand_smiles,docking_folder)
         if open_babel_object.get_status()==definitions.OPAL_SUCCESS:
             ligand_pdbqt_file_path=open_babel_object.save_ligand()
-            # prepare protein
+            # prepare protein, dock and analyse
             for docking_receptor_file_path in docking_protein_names:
                 # first protonate protein with pqr2pdb server
                 protein_pdb_name=os.path.basename(docking_receptor_file_path).replace(".pdb","")

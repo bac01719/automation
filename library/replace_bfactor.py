@@ -6,6 +6,7 @@
 
 import re
 import library.definitions as definitions
+import library.utilities as utilities
 import os
 
 class ReplaceBFactor:
@@ -102,9 +103,17 @@ class ReplaceBFactor:
                     print("Reading mutation (%s) %s " % ("mCSM_Lig", mcsm_lig_key))
             # update pdbs
             self.update_pdb(mcsm_dictionary,_pdb_mcsm_file_path)
+            utilities.normalise_bfactor(definitions.BFACTOR_NORM_START,definitions.BFACTOR_NORM_END,\
+                                        _pdb_mcsm_file_path)
             self.update_pdb(sdm_dictionary, _pdb_sdm_file_path)
+            utilities.normalise_bfactor(definitions.BFACTOR_NORM_START, definitions.BFACTOR_NORM_END, \
+                                        _pdb_sdm_file_path)
             self.update_pdb(duet_dictionary, _pdb_duet_file_path)
+            utilities.normalise_bfactor(definitions.BFACTOR_NORM_START, definitions.BFACTOR_NORM_END, \
+                                        _pdb_duet_file_path)
             self.update_pdb(mcsm_lig_dictionary, _pdb_mcsm_lig_file_path)
+            utilities.normalise_bfactor(definitions.BFACTOR_NORM_START, definitions.BFACTOR_NORM_END, \
+                                        _pdb_mcsm_lig_file_path)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise

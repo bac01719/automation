@@ -10,6 +10,7 @@ import os
 import re
 import xml.dom.minidom
 from pathlib import Path
+import math
 
 """ function to return a string given a dictionary """
 def return_string(dictionary_list):
@@ -183,9 +184,10 @@ def save_whatif_ws(whatif_service,complex_file_path):
         return whatif_file_path
     except Exception as Argument:
         print("An error has occurred \n%s" % Argument)
-        raise
+        # raise exception commented out as this service is not reliable
+        # raise
 
-""" function to create pdb  file from vina's pdbqt protein and files """
+""" function to create pdb file from vina's pdbqt protein and files """
 def create_complex_pdb(poses_file_path,receptor_pdbqt_file_path):
     try:
         # obtain docking folder
@@ -207,8 +209,11 @@ def create_complex_pdb(poses_file_path,receptor_pdbqt_file_path):
         # assign ligand to chain A
         while True:
             line = poses_file.readline()
+            if line == "MODEL 1\n":
+                line="REMARK MODEL 1\n"
+            if line == "ENDMDL\n":
+                line="REMARK ENDMDL\n"
             line = line.replace("LIG    1", "LIG A  1")
-            "LIG    1"
             if line != "MODEL 2\n":
                 if line.count("ATOM      ") == 1:
                     receptor_ligand_pdbqt.write(line.replace("ATOM      ", "HETATM    "))
@@ -225,6 +230,81 @@ def create_complex_pdb(poses_file_path,receptor_pdbqt_file_path):
     except Exception as Argument:
         print("An error has occurred \n%s" % Argument)
         raise
+
+""" function to map an actual scale to a normalised scale """
+def normalise_value(norm_start,norm_end,actual_start,actual_end,actual_value):
+    try:
+        gradation=(actual_end-actual_start)/(norm_end-norm_start)
+        mapped=((actual_value-actual_start)/gradation)+norm_start
+        return mapped
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
+
+""" function to create new pdb file with normalised b factor values """
+def normalise_bfactor(norm_start,norm_end,old_pdb_path):
+    try:
+        # initialise variables
+        max_bfactor=-9999
+        min_bfactor=9999
+        # iterate through old_pdb_path
+        with open(old_pdb_path,"r") as old_pdb:
+            for line in old_pdb:
+                if line[:definitions.PDB_ATOM_END]=="ATOM  " or line[:definitions.PDB_ATOM_END]=="HETATM":
+                    bfactor=line[definitions.PDB_BFACTOR_START-1:definitions.PDB_BFACTOR_END]
+                    if float(bfactor)>max_bfactor:
+                        max_bfactor=float(bfactor)
+                    if float(bfactor)<min_bfactor:
+                        min_bfactor=float(bfactor)
+        # create new pdb
+        new_pdb_path=old_pdb_path.replace(".pdb","_NORM.pdb")
+        new_pdb=open(new_pdb_path,"w")
+        # iterate through old pdb path again
+        with open(old_pdb_path,"r") as old_pdb:
+            for line in old_pdb:
+                if line[:definitions.PDB_ATOM_END]=="ATOM  " or line[:definitions.PDB_ATOM_END]=="HETATM":
+                    bfactor = line[definitions.PDB_BFACTOR_START - 1:definitions.PDB_BFACTOR_END]
+                    norm_bfactor=normalise_value(norm_start,norm_end,max_bfactor,min_bfactor,float(bfactor))
+                    if "-" in str(norm_bfactor):
+                        new_pdb_line = line[:definitions.PDB_ATOM_OCC_END] + " " + '{0:.2f}'.format(norm_bfactor)
+                    else:
+                        new_pdb_line = line[:definitions.PDB_ATOM_OCC_END] + "  " + '{0:.2f}'.format(norm_bfactor)
+                    new_pdb.write(new_pdb_line + line[definitions.PDB_BFACTOR_END:len(line)])
+                else:
+                    new_pdb.write(line)
+        # clean up
+        new_pdb.close()
+        return new_pdb_path
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
+
+""" function to compute -log10(kd) from autodock free energy 
+    delta_g=RTln(Kd) in cal/mol """
+def compute_minuslog10kd(delta_g_calpermol):
+    try:
+        return -math.log10(math.exp(delta_g_calpermol/(1.987*298)))
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
+
+""" functiom to convert -log10(kd) to nM """
+def compute_wildtypenanomole(minuslog10kd):
+    try:
+        return pow(10,-minuslog10kd+9)
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
+
+""" function to convert free energy into binding affinity 
+    delta_g=RTln(Kd) in cal/mol """
+def compute_bindingaffinity(delta_g_calpermol):
+    try:
+        return math.exp(delta_g_calpermol/(1.987*298))
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
+
 
 
 
