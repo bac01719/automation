@@ -185,6 +185,10 @@ WHATIF_SHOWHYDROGENBONDSM="ShowHydrogenBondsM"
 BFACTOR_NORM_START=-1    # botton range of normalised b factors
 BFACTOR_NORM_END=1      # top range of normalised b factors
 
+# binding affinity constants
+AFFINITY_USE_CSMLIG=False   # if true use csm_lig website to otain binding affinity
+                            # other wise uses autodock vina's value
+AFFINITY_VINA_REGEX='\s+[1]\s+([\-]?\d+\.?\d+)\s+[0]?\.[0]{3}\s+[0]?\.[0]{3}'
 
 
 

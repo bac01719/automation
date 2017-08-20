@@ -4,6 +4,7 @@
 #
 
 import library.definitions as definitions
+import library.utilities as utilities
 import urllib.request
 import urllib.parse
 import io
@@ -18,7 +19,7 @@ class MCSMLig:
     _complex_pdb_file_path=""
     _complex_pdb_file_contents=None
     _complex_pdb_file_name=""
-    _csm_lig_pred_affinity=""
+    _lig_pred_affinity=""
     _mcsm_lig_results_file_path=""
 
     def __init__(self,data_analysis_folder,complex_pdb_file_path,mutation_file_path,ligand_pdb_symbol,ligand_smiles):
@@ -27,7 +28,7 @@ class MCSMLig:
         global _complex_pdb_file_name
         global _wild_type_affinity
         global _mcsm_lig_results
-        global _csm_lig_pred_affinity
+        global _lig_pred_affinity
         global _mcsm_lig_results_file_path
         _complex_pdb_file_path=complex_pdb_file_path
         _complex_pdb_file_name = os.path.basename(complex_pdb_file_path)
@@ -43,15 +44,24 @@ class MCSMLig:
             if not os.path.exists(data_analysis_folder):
                 os.mkdir(data_analysis_folder)
             # read in wild type affinity
-            csm_lig_object=CSMLig(complex_pdb_file_path,ligand_pdb_symbol,ligand_smiles)
-            _csm_lig_pred_affinity=csm_lig_object.get_binding_affinity()
-            # compute wild type as negative antilog of predicted affinity value on CSM-Lig website
-            # convert to nano seconds
-            wild_type_affinity=round(pow(10,-float(_csm_lig_pred_affinity))*pow(10,9),3)
+            if definitions.AFFINITY_USE_CSMLIG==True:
+                csm_lig_object=CSMLig(complex_pdb_file_path,ligand_pdb_symbol,ligand_smiles)
+                _lig_pred_affinity=csm_lig_object.get_binding_affinity()
+                # compute wild type as negative antilog of predicted affinity value on CSM-Lig website
+                # convert to nano seconds
+                #wild_type_affinity=round(pow(10,-float(_csm_lig_pred_affinity))*pow(10,9),3)
+                wild_type_affinity=utilities.compute_wildtype_nanomoles(float(_lig_pred_affinity))
+                affinity_column_header='CSM_Lig Affinity -log10(Kd|Ki),'
+            elif definitions.AFFINITY_USE_CSMLIG==False:
+                #use autodock vina free energy value instead
+                vina_out_file_path=os.path.dirname(complex_pdb_file_path)+definitions.FILE_SEPARATOR+"vina.out"
+                _lig_pred_affinity=utilities.get_affinity_calpermol(vina_out_file_path)
+                wild_type_affinity=round(utilities.compute_binding_affinity_nanomoles(_lig_pred_affinity),5)
+                affinity_column_header = 'Vina Affinity cal/mol,'
             # create mCSM_LIG csv file
             _mcsm_lig_results_file_path = data_analysis_folder+definitions.FILE_SEPARATOR+"mcsm_lig_analysis.csv"
             mcsm_lig_results_file = open(_mcsm_lig_results_file_path, 'w')
-            mcsm_lig_results_file.write('PDB,'+'CSM_Lig Affinity -log10(Kd|Ki),'+'WildTypeAffinity nM,'+\
+            mcsm_lig_results_file.write('PDB,'+affinity_column_header+'WildTypeAffinity nM,'+\
                                         'PredictedAffinityChange,'+'WildType,'+'Position,'+'MutantType,'+'Chain,' +\
                                         'LigandID,'+'DistanceToLigand,'+'DUETStabilityChange,'+'\n')
             with open(mutation_file_path, 'r') as mutations:
@@ -77,7 +87,7 @@ class MCSMLig:
         global _complex_pdb_file_path
         global _complex_pdb_file_contents
         global _complex_pdb_file_name
-        global _csm_lig_pred_affinity
+        global _lig_pred_affinity
         # Create the form with simple fields
         form = MultiPartForm()
         form.add_file('wild', _complex_pdb_file_name, fileHandle=io.BytesIO(_complex_pdb_file_contents.encode('utf-8')))
@@ -97,7 +107,7 @@ class MCSMLig:
         except Exception as Argument:
             # error not raised as error could be due to snp
             print("An error has occurred \n%s" % Argument)
-            return (_complex_pdb_file_name, _csm_lig_pred_affinity, wild_type_affinity,\
+            return (_complex_pdb_file_name, _lig_pred_affinity, wild_type_affinity,\
                     definitions.SERVER_ERROR, definitions.SERVER_ERROR, definitions.SERVER_ERROR, \
                     definitions.SERVER_ERROR, definitions.SERVER_ERROR, definitions.SERVER_ERROR, \
                     definitions.SERVER_ERROR, definitions.SERVER_ERROR)
@@ -146,7 +156,7 @@ class MCSMLig:
             print("An error has occurred \n%s" % Argument)
             raise
         finally:
-            return (_complex_pdb_file_name, _csm_lig_pred_affinity, wild_type_affinity, pred_affin_change_value,\
+            return (_complex_pdb_file_name, _lig_pred_affinity, wild_type_affinity, pred_affin_change_value,\
                     wild_type_value, position_value, mutant_type_value, chain_value, ligand_id_value,\
                     distance_to_ligand_value, duet_stability_change_value)
 

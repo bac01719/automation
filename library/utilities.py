@@ -281,15 +281,15 @@ def normalise_bfactor(norm_start,norm_end,old_pdb_path):
 
 """ function to compute -log10(kd) from autodock free energy 
     delta_g=RTln(Kd) in cal/mol """
-def compute_minuslog10kd(delta_g_calpermol):
+def compute_minus_log10kd(delta_g_calpermol):
     try:
         return -math.log10(math.exp(delta_g_calpermol/(1.987*298)))
     except Exception as Argument:
         print("An error has occurred \n%s" % Argument)
         raise
 
-""" functiom to convert -log10(kd) to nM """
-def compute_wildtypenanomole(minuslog10kd):
+""" functiom to convert -log10(kd) M to affinity in nM """
+def compute_wildtype_nanomoles(minuslog10kd):
     try:
         return pow(10,-minuslog10kd+9)
     except Exception as Argument:
@@ -298,13 +298,27 @@ def compute_wildtypenanomole(minuslog10kd):
 
 """ function to convert free energy into binding affinity 
     delta_g=RTln(Kd) in cal/mol """
-def compute_bindingaffinity(delta_g_calpermol):
+def compute_binding_affinity_nanomoles(delta_g_calpermol):
     try:
-        return math.exp(delta_g_calpermol/(1.987*298))
+        return math.exp(delta_g_calpermol/(1.987*298))*pow(10,9)
     except Exception as Argument:
         print("An error has occurred \n%s" % Argument)
         raise
 
+""" function to obtain affinity in cal/mol from vima.out formatted file """
+def get_affinity_calpermol(vina_out_file_path):
+    try:
+        #open vina out file
+        vina_out=open(vina_out_file_path,"r")
+        vina_out_contents=vina_out.read()
+        vina_out.close()
+        # compile regular expression to obtain affinity from vina out
+        parse = re.compile(definitions.AFFINITY_VINA_REGEX)
+        return float(parse.findall(vina_out_contents)[0])*1000
+        #print(vina_out_contents)
+    except Exception as Argument:
+        print("An error has occurred \n%s" % Argument)
+        raise
 
 
 
