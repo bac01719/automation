@@ -10,18 +10,21 @@ import os
 import library.utilities as utilities
 from shutil import copyfile
 from pathlib import Path
+import time
 
 class PrepareReceptor:
 
     """ class to wrap opal service prepare receptor """
 
     _docking_folder=""
-    _opal_response=""
+    _opal_response=[]
+    _opal_status_response=[]
     _pdbqt_file_name=""
 
     """ constructor for prepare_receptor opal service wrapper """
     def __init__(self,pqr_file_path,docking_folder):
         global _opal_response
+        global _opal_status_response
         global _docking_folder
         global _pdbqt_file_name
         _docking_folder=docking_folder
@@ -47,10 +50,20 @@ class PrepareReceptor:
             if definitions.PRERECEP_OPTION_PRESERVE!="":
                 arg_list+=(" "+definitions.PRERECEP_OPTION_PRESERVE)
             print("\nPrepare Receptor command: prepare_receptor4.py %s\n" % arg_list)
-            _opal_response=opal_client.service.launchJobBlocking \
+            opal_initial_response=opal_client.service.launchJob \
                 (argList=arg_list,\
                  inputFile={"name":pqr_path_object.name,"contents":ProcessFile.encode_file(pqr_file_path)})
-            print(_opal_response)
+            print(opal_initial_response)
+            opal_jobid=opal_initial_response["jobID"]
+            while True:
+                # get opal status
+                _opal_status_response=opal_client.service.queryStatus(opal_jobid)
+                if utilities.opal_job_running(_opal_status_response):
+                    _opal_response=opal_client.service.getOutputs(opal_jobid)
+                    print(_opal_response)
+                    break
+                else:
+                    time.sleep(definitions.OPAL_POOLING_TIME)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
@@ -58,8 +71,7 @@ class PrepareReceptor:
     """ base class for opal clients """
     """ get opal server returned error status """
     def get_status(self):
-        global _opal_response
-        return utilities.get_status(_opal_response)
+        return _opal_status_response["code"]
 
     """ get opal server returned error message """
     def get_error(self):
@@ -77,7 +89,7 @@ class PrepareReceptor:
                                      definitions.FILE_SEPARATOR + "prepare_receptor_out")
             # get pdb2pqr results
             opal_pdbqt=""
-            for output in _opal_response['jobOut']['outputFile']:
+            for output in _opal_response['outputFile']:
                 if output['name']==_pdbqt_file_name:
                     opal_pdbqt=urllib.request.urlopen(output['url'])
                     opal_pdbqt_contents = opal_pdbqt.read()

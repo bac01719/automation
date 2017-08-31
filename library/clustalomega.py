@@ -9,16 +9,19 @@ from library.processfile import ProcessFile
 import urllib.request
 import library.utilities as utilities
 from pathlib import Path
+import time
 
 class ClustalOmega:
     """ class to wrap call to opal soap server - clustal omega service"""
 
     _opal_response=[]
+    _opal_status_response=[]
     _template_file_path=""
 
     """ initialise class with full template file path """
     def __init__(self, fasta_file_path, template_file_path):
         global _opal_response
+        global _opal_status_response
         global _template_file_path
         _template_file_path=template_file_path
         try:
@@ -37,18 +40,27 @@ class ClustalOmega:
             if definitions.CLUSTAL_OMEGA_ITER>0:
                 arg_list+=" --iter "+str(definitions.CLUSTAL_OMEGA_ITER)
             print("\nClustal command: clustalo %s\n" % arg_list)
-            _opal_response=opal_client.service.launchJobBlocking\
+            opal_initial_response=opal_client.service.launchJob\
                 (argList=arg_list,\
                  inputFile={"name":"templateFile.fa","contents":fasta_file_contents+template_file_contents})
-            print(_opal_response)
+            print(opal_initial_response)
+            opal_jobid=opal_initial_response["jobID"]
+            while True:
+                # get opal status
+                _opal_status_response=opal_client.service.queryStatus(opal_jobid)
+                if utilities.opal_job_running(_opal_status_response):
+                    _opal_response=opal_client.service.getOutputs(opal_jobid)
+                    print(_opal_response)
+                    break
+                else:
+                    time.sleep(definitions.OPAL_POOLING_TIME)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
 
     """ get opal server returned error status """
     def get_status(self):
-        global _opal_response
-        return utilities.get_status(_opal_response)
+        return _opal_status_response["code"]
 
     """ get opal server returned error message """
     def get_error(self):
@@ -65,7 +77,7 @@ class ClustalOmega:
             # save stdOut and stdErr files
             utilities.save_std_files(_opal_response,Path(_template_file_path).parent.name)
             # read msa results
-            opal_msa=urllib.request.urlopen(_opal_response['jobOut']['outputFile'][MSA_INDEX]['url'])
+            opal_msa=urllib.request.urlopen(_opal_response['outputFile'][MSA_INDEX]['url'])
             opal_msa_contents=opal_msa.read()
             opal_msa.close()
             # save msa results to file

@@ -10,6 +10,7 @@ from zeep import Client
 from library.processfile import ProcessFile
 import library.utilities as utilities
 import urllib.request
+import time
 
 class Homology:
     """ class to handle homology methods"""
@@ -20,6 +21,8 @@ class Homology:
     _protein_template_file_path=""
     _protein_list=[]
     _opal_response=[]
+    _opal_status_response=[]
+    _opal_initial_response=[]
 
     """ initialise method of homology class """
     def __init__(self,msa_file_path):
@@ -123,6 +126,8 @@ class Homology:
         global _protein_template_file_path
         global _protein_list
         global _opal_response
+        global _opal_status_response
+        global _opal_initial_response
         try:
             opal_client = Client(definitions.OPAL_MODELLER_WSDL)
             alignment_file_content = ProcessFile.encode_file(_pir_file_path)
@@ -139,17 +144,25 @@ class Homology:
                 input_file.append({"name":protein,"contents":ProcessFile.encode_file(protein_file_path)})
             # call opal client
             print("\nModeller command : ModellerScriptConfig.xml\n")
-            _opal_response=opal_client.service.launchJobBlocking(argList="ModellerScriptConfig.xml", \
-                                                            inputFile=input_file)
-            print(_opal_response)
+            _opal_initial_response=opal_client.service.launchJob(argList="ModellerScriptConfig.xml",inputFile=input_file)
+            print(_opal_initial_response)
+            opal_jobid=_opal_initial_response["jobID"]
+            while True:
+                # get opal status
+                _opal_status_response=opal_client.service.queryStatus(opal_jobid)
+                if utilities.opal_job_running(_opal_status_response):
+                    _opal_response=opal_client.service.getOutputs(opal_jobid)
+                    print(_opal_response)
+                    break
+                else:
+                    time.sleep(definitions.OPAL_POOLING_TIME)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
 
     """ get opal server returned error status """
     def get_status(self):
-        global _opal_response
-        return utilities.get_status(_opal_response)
+        return _opal_status_response["code"]
 
     """ get opal server returned error message """
     def get_error(self):
@@ -159,21 +172,22 @@ class Homology:
     """ save output from opal server """
     def save_output(self):
         global _opal_response
+        global _opal_initial_response
         global _modeller_folder
         try:
             # save stdOut and stdErr files
             utilities.save_std_files(_opal_response, _modeller_folder)
             # get base url
-            opal_base=_opal_response['status']['baseURL']
+            opal_base=_opal_initial_response['status']['baseURL']
             # get index for ok_models.dat output
             ok_models_index=-1
             counter=-1
-            for name in _opal_response['jobOut']['outputFile']:
+            for name in _opal_response['outputFile']:
                 counter+=1
                 if name['name']=='ok_models.dat':
                     ok_models_index=counter
             # get modeller results ok models and save results to file
-            ok_models=urllib.request.urlopen(_opal_response['jobOut']['outputFile'][ok_models_index]['url'])
+            ok_models=urllib.request.urlopen(_opal_response['outputFile'][ok_models_index]['url'])
             ok_models_content=ok_models.read()
             ok_models_file_path = _modeller_folder+definitions.FILE_SEPARATOR+"ok_models.dat"
             ok_models_file = open(ok_models_file_path, 'w+')

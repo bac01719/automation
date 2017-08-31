@@ -10,18 +10,21 @@ import os
 import library.utilities as utilities
 from shutil import copyfile
 from pathlib import Path
+import time
 
 class PDB2PQR:
 
     """ class to wrap opal service pdb2pqr """
 
     _docking_folder=""
-    _opal_response=""
+    _opal_response=[]
+    _opal_status_response=[]
     _pqr_file_name=""
 
     """ constructor for pdb2pqr opal service wrapper """
     def __init__(self,docking_receptor_file_path,docking_folder):
         global _opal_response
+        global _opal_status_response
         global _docking_folder
         global _pqr_file_name
         _docking_folder=docking_folder
@@ -40,10 +43,20 @@ class PDB2PQR:
             arg_list="--verbose --chain --summary --hbond --drop-water --ff=amber --ph-calc-method=propka "+\
                      path_object.name+" "+_pqr_file_name
             print("\nPDB2PQR command: pdb2pqr.py %s\n" % arg_list)
-            _opal_response=opal_client.service.launchJobBlocking \
+            opal_initial_response=opal_client.service.launchJob\
                 (argList=arg_list,\
                  inputFile={"name":path_object.name,"contents":ProcessFile.encode_file(pdb_file_path)})
-            print(_opal_response)
+            print(opal_initial_response)
+            opal_jobid=opal_initial_response["jobID"]
+            while True:
+                # get opal status
+                _opal_status_response=opal_client.service.queryStatus(opal_jobid)
+                if utilities.opal_job_running(_opal_status_response):
+                    _opal_response=opal_client.service.getOutputs(opal_jobid)
+                    print(_opal_response)
+                    break
+                else:
+                    time.sleep(definitions.OPAL_POOLING_TIME)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
@@ -51,7 +64,7 @@ class PDB2PQR:
     """ base class for opal clients """
     """ get opal server returned error status """
     def get_status(self):
-        return utilities.get_status(_opal_response)
+        return _opal_status_response["code"]
 
     """ get opal server returned error message """
     def get_error(self):
@@ -66,7 +79,7 @@ class PDB2PQR:
             # save stdOut and stdErr files
             utilities.save_std_files(_opal_response, _docking_folder+definitions.FILE_SEPARATOR+"pdb2pqr_out")
             # get pdb2pqr results
-            for output in _opal_response['jobOut']['outputFile']:
+            for output in _opal_response['outputFile']:
                 if output['name']==_pqr_file_name:
                     opal_pqr=urllib.request.urlopen(output['url'])
                     opal_pqr_contents = opal_pqr.read()

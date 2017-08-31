@@ -7,16 +7,19 @@ import urllib.request
 import library.definitions as definitions
 import os
 import library.utilities as utilities
+import time
 
 class OpenBabel():
     """ class to wrap opal service open babel """
 
     _docking_folder=""
-    _opal_response=""
+    _opal_response=[]
+    _opal_status_response=[]
 
     """ constructor for openbabel opal service wrapper """
     def __init__(self,ligand_smiles,docking_folder):
         global _opal_response
+        global _opal_status_response
         global _docking_folder
         _docking_folder=docking_folder
         try:
@@ -42,10 +45,20 @@ class OpenBabel():
                 arg_options +="-c "
             arg_list="-ifile smile.txt -iformat -ismi -ofile "+definitions.PDBQT_LIGAND_FILE+" -oformat -opdbqt "+" "+arg_options
             print("\nBabel command: babel %s\n" % arg_list)
-            _opal_response=opal_client.service.launchJobBlocking \
+            opal_initial_response=opal_client.service.launchJob \
                 (argList=arg_list,\
                  inputFile={"name":"smile.txt","contents":ProcessFile.encode_file(smiles_path)})
-            print(_opal_response)
+            print(opal_initial_response)
+            opal_jobid=opal_initial_response["jobID"]
+            while True:
+                # get opal status
+                _opal_status_response=opal_client.service.queryStatus(opal_jobid)
+                if utilities.opal_job_running(_opal_status_response):
+                    _opal_response=opal_client.service.getOutputs(opal_jobid)
+                    print(_opal_response)
+                    break
+                else:
+                    time.sleep(definitions.OPAL_POOLING_TIME)
         except Exception as Argument:
             print("An error has occurred \n%s" % Argument)
             raise
@@ -53,8 +66,7 @@ class OpenBabel():
     """ base class for opal clients """
     """ get opal server returned error status """
     def get_status(self):
-        global _opal_response
-        return utilities.get_status(_opal_response)
+        return _opal_status_response["code"]
 
     """ get opal server returned error message """
     def get_error(self):
@@ -71,7 +83,7 @@ class OpenBabel():
                                      definitions.FILE_SEPARATOR + "smile2pdbqt_out")
             # get open babel results
             opal_ligand=""
-            for output in _opal_response['jobOut']['outputFile']:
+            for output in _opal_response['outputFile']:
                 if output['name']==definitions.PDBQT_LIGAND_FILE:
                     opal_ligand=urllib.request.urlopen(output['url'])
             opal_ligand_contents = opal_ligand.read()
